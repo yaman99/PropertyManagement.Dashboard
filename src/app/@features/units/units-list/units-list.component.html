@@ -1,0 +1,186 @@
+<app-page-header
+  [title]="selectedBuilding ? 'وحدات مبنى: ' + selectedBuilding.name : 'إدارة الوحدات'"
+  icon="🏢"
+  [breadcrumbs]="selectedBuilding ? [{label: 'المباني', url: '/app/buildings'}, {label: selectedBuilding.name}] : [{label: 'الوحدات'}]">
+  <div actions>
+    <ng-container *ngIf="selectedBuilding">
+      <button
+        *appHasPermission="[Permission.UNITS_WRITE]"
+        class="btn btn-brand"
+        (click)="addUnitToBuilding()">
+        <i class="bi bi-plus-lg"></i> إضافة وحدة للمبنى
+      </button>
+    </ng-container>
+    <ng-container *ngIf="!selectedBuilding">
+      <button
+        *appHasPermission="[Permission.UNITS_WRITE]"
+        class="btn btn-brand"
+        [routerLink]="['new']">
+        <i class="bi bi-plus-lg"></i> إضافة وحدة جديدة
+      </button>
+    </ng-container>
+  </div>
+</app-page-header>
+
+<!-- Building Info Banner -->
+<div *ngIf="selectedBuilding" class="alert alert-info mb-4 d-flex justify-content-between align-items-center" dir="rtl">
+  <div>
+    <strong>🏗️ {{ selectedBuilding.name }}</strong>
+    <span class="mx-2">|</span>
+    <span>{{ selectedBuilding.address }}</span>
+  </div>
+  <button class="btn btn-sm btn-outline-secondary" (click)="clearFilters()">
+    <i class="bi bi-x-lg"></i> عرض جميع الوحدات
+  </button>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4" dir="rtl">
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-md-3">
+        <label class="form-label">البحث</label>
+        <input
+          type="text"
+          class="form-control"
+          [(ngModel)]="searchTerm"
+          (ngModelChange)="applyFilters()"
+          placeholder="ابحث بكود الوحدة أو المبنى...">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">الحالة</label>
+        <select class="form-select" [(ngModel)]="statusFilter" (ngModelChange)="applyFilters()">
+          <option value="All">الكل</option>
+          <option [value]="UnitStatus.Available">متاح</option>
+          <option [value]="UnitStatus.Rented">مؤجر</option>
+          <option [value]="UnitStatus.Maintenance">صيانة</option>
+          <option [value]="UnitStatus.Reserved">محجوز</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">النوع</label>
+        <select class="form-select" [(ngModel)]="typeFilter" (ngModelChange)="applyFilters()">
+          <option value="All">الكل</option>
+          <option [value]="UnitType.Apartment">شقة</option>
+          <option [value]="UnitType.Villa">فيلا</option>
+          <option [value]="UnitType.Office">مكتب</option>
+          <option [value]="UnitType.Shop">محل</option>
+          <option [value]="UnitType.Warehouse">مستودع</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">المالك</label>
+        <select class="form-select" [(ngModel)]="ownerFilter" (ngModelChange)="applyFilters()">
+          <option value="All">الكل</option>
+          <option *ngFor="let owner of owners$ | async" [value]="owner.id">
+            {{ owner.fullName }}
+          </option>
+        </select>
+      </div>
+      <div class="col-md-2 d-flex align-items-end">
+        <button class="btn btn-outline-secondary w-100" (click)="clearFilters()">
+          مسح الفلاتر
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Loading -->
+<div *ngIf="loading$ | async" class="text-center py-5">
+  <div class="spinner-border text-brand" role="status">
+    <span class="visually-hidden">جاري التحميل...</span>
+  </div>
+</div>
+
+<!-- Units Table -->
+<div *ngIf="!(loading$ | async)" class="card" dir="rtl">
+  <div class="card-body">
+    <ng-container *ngIf="(filteredUnits$ | async) as units">
+      <div *ngIf="units.length === 0">
+        <app-empty-state
+          icon="🏢"
+          title="لا توجد وحدات"
+          message="لم يتم العثور على أي وحدات. ابدأ بإضافة وحدة جديدة">
+          <button
+            *appHasPermission="[Permission.UNITS_WRITE]"
+            class="btn btn-brand"
+            [routerLink]="['new']">
+            <i class="bi bi-plus-lg"></i> إضافة وحدة جديدة
+          </button>
+        </app-empty-state>
+      </div>
+
+      <div *ngIf="units.length > 0" class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>كود الوحدة</th>
+              <th>النوع</th>
+              <th>المالك</th>
+              <th>المبنى</th>
+              <th>المساحة</th>
+              <th>الإيجار</th>
+              <th>الحالة</th>
+              <th>النشر</th>
+              <th>الإجراءات</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let unit of units">
+              <td>
+                <div class="fw-bold">{{ unit.unitCode }}</div>
+                <small class="text-muted" *ngIf="unit.floor">الدور: {{ unit.floor }}</small>
+              </td>
+              <td>
+                <span class="badge bg-secondary">{{ getUnitTypeLabel(unit.type) }}</span>
+              </td>
+              <td>{{ unit.ownerId ? (getOwnerName(unit.ownerId) | async) : '-' }}</td>
+              <td>{{ unit.buildingName || '-' }}</td>
+              <td>{{ unit.areaSqm ? unit.areaSqm + ' م²' : '-' }}</td>
+              <td>
+                <span class="text-brand fw-bold">
+                  {{ unit.rentPrice | number }} ر.س
+                </span>
+              </td>
+              <td>
+                <app-status-badge [status]="unit.status"></app-status-badge>
+              </td>
+              <td>
+                <span class="badge" [class.bg-success]="unit.isPublished" [class.bg-secondary]="!unit.isPublished">
+                  <i class="bi" [class.bi-eye]="unit.isPublished" [class.bi-eye-slash]="!unit.isPublished"></i>
+                  {{ unit.isPublished ? 'منشور' : 'غير منشور' }}
+                </span>
+              </td>
+              <td>
+                <div class="btn-group btn-group-sm" role="group">
+                  <a
+                    class="btn btn-action-view"
+                    [routerLink]="['/app/accounting/statement/unit', unit.id]"
+                    title="كشف الحساب">
+                    <i class="bi bi-receipt"></i>
+                  </a>
+                  <button
+                    *appHasPermission="[Permission.UNITS_WRITE]"
+                    class="btn btn-action-edit"
+                    [routerLink]="['edit', unit.id]"
+                    title="تعديل">
+                    <i class="bi bi-pencil-fill"></i>
+                  </button>
+                  <button
+                    *appHasPermission="[Permission.UNITS_WRITE]"
+                    class="btn btn-action-delete"
+                    (click)="deleteUnit(unit)"
+                    [disabled]="unit.status === UnitStatus.Rented"
+                    title="حذف">
+                    <i class="bi bi-trash-fill"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </ng-container>
+  </div>
+</div>

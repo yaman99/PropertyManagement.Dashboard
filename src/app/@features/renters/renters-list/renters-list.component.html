@@ -1,0 +1,125 @@
+<app-page-header
+  title="إدارة المستأجرين"
+  icon="🔑"
+  [breadcrumbs]="[{label: 'المستأجرون'}]">
+  <div actions>
+    <button
+      *appHasPermission="[Permission.RENTERS_WRITE]"
+      class="btn btn-brand"
+      [routerLink]="['new']">
+      <i class="bi bi-plus-lg"></i> إضافة مستأجر جديد
+    </button>
+  </div>
+</app-page-header>
+
+<!-- Filters -->
+<div class="card mb-4" dir="rtl">
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label">البحث</label>
+        <input
+          type="text"
+          class="form-control"
+          [(ngModel)]="searchTerm"
+          (ngModelChange)="applyFilters()"
+          placeholder="ابحث بالاسم، البريد، الهاتف، أو الهوية...">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">الحالة</label>
+        <select class="form-select" [(ngModel)]="statusFilter" (ngModelChange)="applyFilters()">
+          <option value="All">الكل</option>
+          <option [value]="RenterStatus.Active">نشط</option>
+          <option [value]="RenterStatus.Inactive">غير نشط</option>
+        </select>
+      </div>
+      <div class="col-md-2 d-flex align-items-end">
+        <button class="btn btn-outline-secondary w-100" (click)="clearFilters()">
+          مسح الفلاتر
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Loading -->
+<div *ngIf="loading$ | async" class="text-center py-5">
+  <div class="spinner-border text-brand" role="status">
+    <span class="visually-hidden">جاري التحميل...</span>
+  </div>
+</div>
+
+<!-- Renters Table -->
+<div *ngIf="!(loading$ | async)" class="card" dir="rtl">
+  <div class="card-body">
+    <ng-container *ngIf="(filteredRenters$ | async) as renters">
+      <div *ngIf="renters.length === 0">
+        <app-empty-state
+          icon="🔑"
+          title="لا يوجد مستأجرون"
+          message="لم يتم العثور على أي مستأجرين. ابدأ بإضافة مستأجر جديد">
+          <button
+            *appHasPermission="[Permission.RENTERS_WRITE]"
+            class="btn btn-brand"
+            [routerLink]="['new']">
+            <i class="bi bi-plus-lg"></i> إضافة مستأجر جديد
+          </button>
+        </app-empty-state>
+      </div>
+
+      <div *ngIf="renters.length > 0" class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>الاسم الكامل</th>
+              <th>رقم الهوية</th>
+              <th>الهاتف</th>
+              <th>البريد الإلكتروني</th>
+              <th>جهة العمل</th>
+              <th>الحالة</th>
+              <th>الإجراءات</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let renter of renters">
+              <td>
+                <div class="fw-bold">{{ renter.fullName }}</div>
+              </td>
+              <td>{{ renter.nationalId || '-' }}</td>
+              <td>{{ renter.phone }}</td>
+              <td>{{ renter.email || '-' }}</td>
+              <td>{{ renter.employer || '-' }}</td>
+              <td>
+                <app-status-badge [status]="renter.status"></app-status-badge>
+              </td>
+              <td>
+                <div class="btn-group btn-group-sm" role="group">
+                  <a
+                    class="btn btn-action-view"
+                    [routerLink]="['/app/accounting/statement/renter', renter.id]"
+                    title="كشف الحساب">
+                    <i class="bi bi-receipt"></i>
+                  </a>
+                  <button
+                    *appHasPermission="[Permission.RENTERS_WRITE]"
+                    class="btn btn-action-edit"
+                    [routerLink]="['edit', renter.id]"
+                    title="تعديل">
+                    <i class="bi bi-pencil-fill"></i>
+                  </button>
+                  <button
+                    *appHasPermission="[Permission.RENTERS_WRITE]"
+                    class="btn btn-action-delete"
+                    (click)="deleteRenter(renter)"
+                    title="حذف">
+                    <i class="bi bi-trash-fill"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </ng-container>
+  </div>
+</div>

@@ -1,0 +1,116 @@
+<app-page-header
+  title="استفسارات العملاء"
+  icon="📨"
+  [breadcrumbs]="[{label: 'الاستفسارات'}]"
+  [showActions]="false">
+</app-page-header>
+
+<!-- Filters -->
+<div class="card mb-4" dir="rtl">
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label">البحث</label>
+        <input
+          type="text"
+          class="form-control"
+          [(ngModel)]="searchTerm"
+          placeholder="ابحث بالاسم، البريد الإلكتروني، أو رقم الهاتف...">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">حالة الاستفسار</label>
+        <select class="form-select" [(ngModel)]="statusFilter">
+          <option value="All">الكل</option>
+          <option [value]="InquiryStatus.New">جديد</option>
+          <option [value]="InquiryStatus.Contacted">تم التواصل</option>
+          <option [value]="InquiryStatus.Qualified">مؤهل</option>
+          <option [value]="InquiryStatus.Rejected">مرفوض</option>
+          <option [value]="InquiryStatus.Converted">تم التحويل</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Loading -->
+<div *ngIf="loading$ | async" class="text-center py-5">
+  <div class="spinner-border text-brand" role="status">
+    <span class="visually-hidden">جاري التحميل...</span>
+  </div>
+</div>
+
+<!-- Inquiries Table -->
+<div *ngIf="!(loading$ | async)" class="card" dir="rtl">
+  <div class="card-body">
+    <ng-container *ngIf="(inquiries$ | async) as inquiries">
+      <div *ngIf="inquiries.length === 0">
+        <app-empty-state
+          icon="📨"
+          title="لا توجد استفسارات"
+          message="لم يتم استلام أي استفسارات من العملاء بعد">
+        </app-empty-state>
+      </div>
+
+      <div *ngIf="inquiries.length > 0" class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>التاريخ</th>
+              <th>العميل</th>
+              <th>الوحدة</th>
+              <th>البريد الإلكتروني</th>
+              <th>الهاتف</th>
+              <th>الحالة</th>
+              <th>الإجراءات</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let inquiry of inquiries">
+              <td>
+                <div>{{ inquiry.createdAt | date:'dd/MM/yyyy' }}</div>
+                <small class="text-muted">{{ inquiry.createdAt | date:'HH:mm' }}</small>
+              </td>
+              <td>
+                <div class="fw-bold">{{ inquiry.fullName }}</div>
+                <small class="text-muted" *ngIf="inquiry.nationality">{{ inquiry.nationality }}</small>
+              </td>
+              <td>
+                <span class="badge bg-secondary">{{ inquiry.unitCode || inquiry.unitId }}</span>
+              </td>
+              <td>{{ inquiry.email }}</td>
+              <td>{{ inquiry.phone }}</td>
+              <td>
+                <select
+                  class="form-select form-select-sm"
+                  [value]="inquiry.status"
+                  (change)="updateStatus(inquiry, $any($event.target).value)">
+                  <option [value]="InquiryStatus.New">جديد</option>
+                  <option [value]="InquiryStatus.Contacted">تم التواصل</option>
+                  <option [value]="InquiryStatus.Qualified">مؤهل</option>
+                  <option [value]="InquiryStatus.Rejected">مرفوض</option>
+                  <option [value]="InquiryStatus.Converted">تم التحويل</option>
+                </select>
+              </td>
+              <td>
+                <div class="btn-group btn-group-sm" role="group">
+                  <a
+                    class="btn btn-action-view"
+                    [routerLink]="['/app/inquiries', inquiry.id]"
+                    title="عرض التفاصيل">
+                    <i class="bi bi-eye-fill"></i>
+                  </a>
+                  <button
+                    class="btn btn-action-delete"
+                    (click)="deleteInquiry(inquiry)"
+                    title="حذف">
+                    <i class="bi bi-trash-fill"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </ng-container>
+  </div>
+</div>

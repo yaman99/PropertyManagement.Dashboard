@@ -1,0 +1,333 @@
+<app-page-header
+  [title]="request?.title || 'تفاصيل الطلب'"
+  icon="📋"
+  [breadcrumbs]="[
+    {label: 'الطلبات', url: '/app/requests'},
+    {label: 'التفاصيل'}
+  ]">
+  <div actions>
+    <button class="btn btn-outline-secondary" (click)="goBack()">
+      <i class="bi bi-arrow-right"></i> رجوع
+    </button>
+  </div>
+</app-page-header>
+
+<!-- Loading -->
+<div *ngIf="loading" class="text-center py-5">
+  <div class="spinner-border text-brand" role="status">
+    <span class="visually-hidden">جاري التحميل...</span>
+  </div>
+</div>
+
+<div *ngIf="!loading && request" class="row g-4" dir="rtl">
+  <!-- Main Content -->
+  <div class="col-lg-8">
+    <!-- Request Details Card -->
+    <div class="card mb-4">
+      <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">تفاصيل الطلب</h5>
+        <div class="d-flex gap-2">
+          <span class="badge" [ngClass]="getPriorityClass(request.priority)">
+            {{ getPriorityLabel(request.priority) }}
+          </span>
+          <app-status-badge [status]="request.status"></app-status-badge>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label class="text-muted small">التصنيف</label>
+            <div class="fw-bold">{{ getCategoryLabel(request.category) }}</div>
+          </div>
+          <div class="col-md-6">
+            <label class="text-muted small">تاريخ الإنشاء</label>
+            <div class="fw-bold">{{ formatDate(request.createdAt) }}</div>
+          </div>
+        </div>
+
+        <hr>
+
+        <h6 class="text-brand mb-3">الوصف</h6>
+        <p class="mb-0">{{ request.description }}</p>
+      </div>
+    </div>
+
+    <!-- Photos Card -->
+    <div *ngIf="request.photos && request.photos.length > 0" class="card mb-4">
+      <div class="card-header bg-white">
+        <h5 class="mb-0">الصور المرفقة ({{ request.photos.length }})</h5>
+      </div>
+      <div class="card-body">
+        <div class="row g-2">
+          <div *ngFor="let photo of request.photos" class="col-md-4 col-6">
+            <a [href]="photo" target="_blank">
+              <img [src]="photo" class="img-thumbnail w-100" style="height: 150px; object-fit: cover;">
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Comments Card -->
+    <div class="card">
+      <div class="card-header bg-white">
+        <h5 class="mb-0">التعليقات ({{ request.comments.length || 0 }})</h5>
+      </div>
+      <div class="card-body">
+        <!-- Comment List -->
+        <div *ngIf="request.comments && request.comments.length > 0" class="comments-list mb-4">
+          <div *ngFor="let comment of request.comments" class="comment-item p-3 mb-2 bg-light rounded">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <strong>{{ comment.by }}</strong>
+              <small class="text-muted">{{ formatDate(comment.at) }}</small>
+            </div>
+            <p class="mb-0">{{ comment.text }}</p>
+          </div>
+        </div>
+
+        <div *ngIf="!request.comments || request.comments.length === 0" class="text-center text-muted py-3">
+          لا توجد تعليقات بعد
+        </div>
+
+        <!-- Add Comment -->
+        <div *appHasPermission="[Permission.REQUESTS_WRITE]" class="mt-3">
+          <hr>
+          <h6 class="mb-3">إضافة تعليق</h6>
+          <div class="mb-3">
+            <textarea
+              class="form-control"
+              [(ngModel)]="newComment"
+              rows="3"
+              placeholder="اكتب تعليقك هنا..."></textarea>
+          </div>
+          <button
+            type="button"
+            class="btn btn-brand"
+            [disabled]="!newComment.trim()"
+            (click)="addComment()">
+            <i class="bi bi-send"></i> إرسال
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <div class="col-lg-4">
+    <!-- Status Update Card -->
+    <div *appHasPermission="[Permission.REQUESTS_WRITE]" class="card mb-4">
+      <div class="card-header bg-white">
+        <h5 class="mb-0">تحديث الحالة</h5>
+      </div>
+      <div class="card-body">
+        <select class="form-select mb-3" [(ngModel)]="newStatus">
+          <option *ngFor="let status of statuses" [value]="status">
+            {{ getStatusLabel(status) }}
+          </option>
+        </select>
+        <button
+          type="button"
+          class="btn btn-brand w-100"
+          [disabled]="newStatus === request.status"
+          (click)="updateStatus()">
+          تحديث الحالة
+        </button>
+      </div>
+    </div>
+
+    <!-- Related Info Card -->
+    <div class="card">
+      <div class="card-header bg-white">
+        <h5 class="mb-0">معلومات مرتبطة</h5>
+      </div>
+      <div class="card-body">
+        <!-- Unit Info -->
+        <div class="mb-3">
+          <label class="text-muted small">الوحدة</label>
+          <div *ngIf="unit; else noUnit" class="fw-bold">
+            {{ unit.unitCode }}
+            <small class="text-muted d-block">{{ unit.buildingName || 'غير محدد' }}</small>
+          </div>
+          <ng-template #noUnit>
+            <div class="text-muted">غير محدد</div>
+          </ng-template>
+        </div>
+
+        <!-- Owner Info -->
+        <div class="mb-3" *ngIf="owner">
+          <label class="text-muted small">المالك</label>
+          <div class="fw-bold">
+            {{ owner.fullName }}
+            <small class="text-muted d-block">{{ owner.phone }}</small>
+          </div>
+        </div>
+
+        <!-- Renter Info -->
+        <div class="mb-3">
+          <label class="text-muted small">المستأجر</label>
+          <div *ngIf="renter; else noRenter" class="fw-bold">
+            {{ renter.fullName }}
+            <small class="text-muted d-block">{{ renter.phone }}</small>
+          </div>
+          <ng-template #noRenter>
+            <div class="text-muted">غير محدد</div>
+          </ng-template>
+        </div>
+
+        <hr>
+
+        <!-- Request Info -->
+        <div class="mb-3">
+          <label class="text-muted small">رقم الطلب</label>
+          <div class="fw-bold font-monospace">{{ request.id }}</div>
+        </div>
+
+        <div>
+          <label class="text-muted small">آخر تحديث</label>
+          <div class="fw-bold">{{ formatDate(request.updatedAt) }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Expense Recording Card -->
+    <div *ngIf="request.unitId" class="card mt-4">
+      <div class="card-header bg-white">
+        <h5 class="mb-0">💰 تسجيل المصروفات</h5>
+      </div>
+      <div class="card-body">
+        <!-- No Unit Found -->
+        <div *ngIf="!unit" class="alert alert-warning small mb-0">
+          <i class="bi bi-exclamation-triangle"></i>
+          الوحدة غير موجودة في النظام
+        </div>
+
+        <!-- Unit exists but no owner -->
+        <div *ngIf="unit && !owner" class="alert alert-warning small mb-0">
+          <i class="bi bi-exclamation-triangle"></i>
+          لم يتم ربط الوحدة بمالك. يرجى تعيين مالك للوحدة أولاً
+        </div>
+
+        <!-- Already Recorded -->
+        <div *ngIf="unit && owner && expenseRecorded" class="text-center py-3">
+          <div class="text-success mb-2">
+            <i class="bi bi-check-circle-fill fs-1"></i>
+          </div>
+          <p class="mb-0 text-success fw-bold">تم تسجيل المصروفات لهذا الطلب</p>
+        </div>
+
+        <!-- Can Record -->
+        <div *ngIf="unit && owner && !expenseRecorded">
+          <p class="text-muted small mb-3">
+            سجّل تكاليف الصيانة ليتم خصمها من رصيد المالك
+          </p>
+
+          <div class="mb-3 p-2 bg-light rounded">
+            <div class="d-flex justify-content-between">
+              <span class="text-muted">المالك:</span>
+              <span class="fw-bold">{{ owner.fullName }}</span>
+            </div>
+            <div class="d-flex justify-content-between">
+              <span class="text-muted">الوحدة:</span>
+              <span class="fw-bold">{{ unit.unitCode }}</span>
+            </div>
+          </div>
+
+          <button
+            *ngIf="canRecordExpense()"
+            class="btn btn-warning w-100"
+            (click)="openExpenseModal()">
+            <i class="bi bi-cash-coin"></i> تسجيل مصروفات الصيانة
+          </button>
+
+          <div *ngIf="!canRecordExpense() && !expenseRecorded" class="alert alert-info small mb-0">
+            <i class="bi bi-info-circle"></i>
+            يمكن تسجيل المصروفات بعد حل الطلب أو إغلاقه
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Expense Modal -->
+<div *ngIf="showExpenseModal" class="modal-backdrop fade show"></div>
+<div *ngIf="showExpenseModal" class="modal fade show d-block" tabindex="-1" dir="rtl">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">💰 تسجيل مصروفات الصيانة</h5>
+        <button type="button" class="btn-close" (click)="closeExpenseModal()"></button>
+      </div>
+      <div class="modal-body">
+        <!-- Info Box -->
+        <div class="alert alert-light border mb-4">
+          <div class="row">
+            <div class="col-6">
+              <small class="text-muted">المالك</small>
+              <div class="fw-bold">{{ owner?.fullName }}</div>
+            </div>
+            <div class="col-6">
+              <small class="text-muted">الوحدة</small>
+              <div class="fw-bold">{{ unit?.unitCode }}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">المبلغ (ريال) <span class="text-danger">*</span></label>
+          <input
+            type="number"
+            class="form-control form-control-lg text-center"
+            [(ngModel)]="expenseForm.amount"
+            min="0"
+            placeholder="0">
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">الوصف</label>
+          <input
+            type="text"
+            class="form-control"
+            [(ngModel)]="expenseForm.description"
+            placeholder="وصف المصروفات">
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">طريقة الدفع</label>
+          <select class="form-select" [(ngModel)]="expenseForm.paymentMethod">
+            <option value="cash">نقدي</option>
+            <option value="bank_transfer">تحويل بنكي</option>
+            <option value="check">شيك</option>
+          </select>
+        </div>
+
+        <div class="alert alert-warning small">
+          <i class="bi bi-exclamation-triangle"></i>
+          سيتم خصم هذا المبلغ من رصيد المالك المستحق
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeExpenseModal()">
+          إلغاء
+        </button>
+        <button
+          type="button"
+          class="btn btn-warning"
+          [disabled]="isRecordingExpense || expenseForm.amount <= 0"
+          (click)="recordExpense()">
+          <span *ngIf="isRecordingExpense" class="spinner-border spinner-border-sm me-1"></span>
+          <i *ngIf="!isRecordingExpense" class="bi bi-check-lg"></i>
+          تأكيد التسجيل
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<div *ngIf="!loading && !request" class="text-center py-5">
+  <div class="display-1 mb-3">❓</div>
+  <h4>الطلب غير موجود</h4>
+  <p class="text-muted">لم يتم العثور على الطلب المطلوب</p>
+  <button class="btn btn-brand" (click)="goBack()">
+    العودة للقائمة
+  </button>
+</div>

@@ -1,0 +1,344 @@
+<app-page-header
+  title="إنشاء عقد إيجار جديد"
+  icon="📄"
+  [breadcrumbs]="[
+    {label: 'العقود', url: '/app/leases'},
+    {label: 'عقد جديد'}
+  ]"
+  [showActions]="false">
+</app-page-header>
+
+<div class="wizard-container" dir="rtl">
+  <!-- Stepper -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <div class="stepper">
+        <div
+          *ngFor="let step of steps; let i = index"
+          class="step"
+          [class.active]="currentStep === step.id"
+          [class.completed]="currentStep > step.id">
+          <div class="step-icon">
+            <span *ngIf="currentStep <= step.id">{{ step.icon }}</span>
+            <i *ngIf="currentStep > step.id" class="bi bi-check-lg text-success"></i>
+          </div>
+          <div class="step-title">{{ step.title }}</div>
+          <div class="step-connector" *ngIf="i < steps.length - 1"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 1: Select Unit -->
+  <div class="card" *ngIf="currentStep === 1">
+    <div class="card-header bg-brand text-white">
+      <h5 class="mb-0">🏢 اختيار الوحدة المتاحة</h5>
+    </div>
+    <div class="card-body">
+      <div class="alert alert-info">
+        <i class="bi bi-info-circle me-2"></i>
+        يتم عرض الوحدات المتاحة فقط (غير المؤجرة)
+      </div>
+
+      <div class="row g-3">
+        <div
+          class="col-md-4"
+          *ngFor="let unit of availableUnits$ | async">
+          <div
+            class="unit-card"
+            [class.selected]="selectedUnit?.id === unit.id"
+            (click)="selectUnit(unit)">
+            <div class="unit-type">
+              <span class="badge bg-secondary">{{ getUnitTypeLabel(unit.type) }}</span>
+            </div>
+            <h5>{{ unit.unitCode }}</h5>
+            <p class="text-muted mb-1" *ngIf="unit.buildingName">{{ unit.buildingName }}</p>
+            <p class="text-muted mb-1" *ngIf="unit.areaSqm">{{ unit.areaSqm }} م²</p>
+            <div class="unit-price">
+              {{ unit.rentPrice | number }} ر.س
+            </div>
+            <small class="text-muted" *ngIf="unit.ownerId">المالك: {{ getOwnerName(unit.ownerId) | async }}</small>
+            <div class="selected-indicator" *ngIf="selectedUnit?.id === unit.id">
+              <i class="bi bi-check-circle-fill text-success"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12" *ngIf="(availableUnits$ | async)?.length === 0">
+          <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            لا توجد وحدات متاحة للإيجار حالياً
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 2: Select Renter -->
+  <div class="card" *ngIf="currentStep === 2">
+    <div class="card-header bg-brand text-white">
+      <h5 class="mb-0">👤 اختيار المستأجر</h5>
+    </div>
+    <div class="card-body">
+      <div class="alert alert-info">
+        <i class="bi bi-info-circle me-2"></i>
+        يتم عرض المستأجرين النشطين فقط
+      </div>
+
+      <div class="row g-3">
+        <div
+          class="col-md-4"
+          *ngFor="let renter of activeRenters$ | async">
+          <div
+            class="renter-card"
+            [class.selected]="selectedRenter?.id === renter.id"
+            (click)="selectRenter(renter)">
+            <div class="renter-avatar">
+              {{ renter.fullName.charAt(0) }}
+            </div>
+            <h5>{{ renter.fullName }}</h5>
+            <p class="text-muted mb-1">
+              <i class="bi bi-phone me-1"></i>
+              {{ renter.phone }}
+            </p>
+            <p class="text-muted mb-1" *ngIf="renter.email">
+              <i class="bi bi-envelope me-1"></i>
+              {{ renter.email }}
+            </p>
+            <p class="text-muted mb-0" *ngIf="renter.nationalId">
+              <i class="bi bi-card-text me-1"></i>
+              {{ renter.nationalId }}
+            </p>
+            <div class="selected-indicator" *ngIf="selectedRenter?.id === renter.id">
+              <i class="bi bi-check-circle-fill text-success"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12" *ngIf="(activeRenters$ | async)?.length === 0">
+          <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            لا يوجد مستأجرين نشطين. يرجى إضافة مستأجر أولاً.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 3: Lease Details -->
+  <div class="card" *ngIf="currentStep === 3">
+    <div class="card-header bg-brand text-white">
+      <h5 class="mb-0">📋 تفاصيل العقد</h5>
+    </div>
+    <div class="card-body">
+      <form [formGroup]="leaseForm">
+        <div class="row g-3">
+          <!-- Start Date -->
+          <div class="col-md-6">
+            <label class="form-label">تاريخ بداية العقد <span class="text-danger">*</span></label>
+            <input
+              type="date"
+              class="form-control"
+              formControlName="startDate"
+              [class.is-invalid]="leaseForm.get('startDate')?.invalid && leaseForm.get('startDate')?.touched">
+            <div class="invalid-feedback">تاريخ البداية مطلوب</div>
+          </div>
+
+          <!-- End Date -->
+          <div class="col-md-6">
+            <label class="form-label">تاريخ نهاية العقد <span class="text-danger">*</span></label>
+            <input
+              type="date"
+              class="form-control"
+              formControlName="endDate"
+              [class.is-invalid]="leaseForm.get('endDate')?.invalid && leaseForm.get('endDate')?.touched">
+            <div class="invalid-feedback">تاريخ النهاية مطلوب</div>
+          </div>
+
+          <!-- Payment Cycle -->
+          <div class="col-md-4">
+            <label class="form-label">دورة الدفع <span class="text-danger">*</span></label>
+            <select class="form-select" formControlName="paymentCycle">
+              <option [value]="PaymentCycle.Monthly">شهري</option>
+              <option [value]="PaymentCycle.Quarterly">ربع سنوي</option>
+              <option [value]="PaymentCycle.Yearly">سنوي</option>
+            </select>
+          </div>
+
+          <!-- Rent Amount -->
+          <div class="col-md-4">
+            <label class="form-label">قيمة الإيجار <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <input
+                type="number"
+                class="form-control"
+                formControlName="rentAmount"
+                [class.is-invalid]="leaseForm.get('rentAmount')?.invalid && leaseForm.get('rentAmount')?.touched">
+              <span class="input-group-text">ر.س</span>
+            </div>
+            <div class="invalid-feedback d-block" *ngIf="leaseForm.get('rentAmount')?.invalid && leaseForm.get('rentAmount')?.touched">
+              قيمة الإيجار مطلوبة
+            </div>
+          </div>
+
+          <!-- Due Day -->
+          <div class="col-md-4">
+            <label class="form-label">يوم الاستحقاق</label>
+            <input
+              type="number"
+              class="form-control"
+              formControlName="dueDayOfMonth"
+              min="1"
+              max="28"
+              placeholder="1">
+            <small class="text-muted">من 1 إلى 28</small>
+          </div>
+
+          <!-- Deposit -->
+          <div class="col-md-6">
+            <label class="form-label">مبلغ التأمين</label>
+            <div class="input-group">
+              <input
+                type="number"
+                class="form-control"
+                formControlName="depositAmount"
+                placeholder="اختياري">
+              <span class="input-group-text">ر.س</span>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Step 4: Review & Confirm -->
+  <div class="card" *ngIf="currentStep === 4">
+    <div class="card-header bg-brand text-white">
+      <h5 class="mb-0">✅ المراجعة والتأكيد</h5>
+    </div>
+    <div class="card-body">
+      <!-- Summary -->
+      <div class="row mb-4">
+        <div class="col-md-6">
+          <div class="summary-card">
+            <h6 class="text-brand">الوحدة</h6>
+            <p class="mb-1"><strong>{{ selectedUnit?.unitCode }}</strong></p>
+            <p class="mb-1 text-muted" *ngIf="selectedUnit?.buildingName">{{ selectedUnit?.buildingName }}</p>
+            <p class="mb-0">{{ selectedUnit?.rentPrice | number }} ر.س</p>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="summary-card">
+            <h6 class="text-brand">المستأجر</h6>
+            <p class="mb-1"><strong>{{ selectedRenter?.fullName }}</strong></p>
+            <p class="mb-1 text-muted">{{ selectedRenter?.phone }}</p>
+            <p class="mb-0 text-muted">{{ selectedRenter?.email }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="row mb-4">
+        <div class="col-md-12">
+          <div class="summary-card">
+            <h6 class="text-brand">تفاصيل العقد</h6>
+            <div class="row">
+              <div class="col-md-3">
+                <small class="text-muted">تاريخ البداية</small>
+                <p class="mb-0">{{ formatDate(leaseForm.value.startDate) }}</p>
+              </div>
+              <div class="col-md-3">
+                <small class="text-muted">تاريخ النهاية</small>
+                <p class="mb-0">{{ formatDate(leaseForm.value.endDate) }}</p>
+              </div>
+              <div class="col-md-3">
+                <small class="text-muted">دورة الدفع</small>
+                <p class="mb-0">{{ getPaymentCycleLabel(leaseForm.value.paymentCycle) }}</p>
+              </div>
+              <div class="col-md-3">
+                <small class="text-muted">قيمة الإيجار</small>
+                <p class="mb-0 text-brand fw-bold">{{ leaseForm.value.rentAmount | number }} ر.س</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Payment Schedule Preview -->
+      <h6 class="text-brand mb-3">جدول الدفعات المتوقع</h6>
+      <div class="table-responsive mb-3" *ngIf="paymentSchedulePreview.length > 0">
+        <table class="table table-sm table-striped">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>تاريخ الاستحقاق</th>
+              <th>المبلغ</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let payment of paymentSchedulePreview; let i = index">
+              <td>{{ i + 1 }}</td>
+              <td>{{ formatDate(payment.dueDate) }}</td>
+              <td>{{ payment.amount | number }} ر.س</td>
+            </tr>
+          </tbody>
+          <tfoot class="table-dark">
+            <tr>
+              <th colspan="2">إجمالي قيمة العقد</th>
+              <th>{{ getTotalAmount() | number }} ر.س</th>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div class="alert alert-warning" *ngIf="leaseForm.value.depositAmount">
+        <i class="bi bi-info-circle me-2"></i>
+        مبلغ التأمين: <strong>{{ leaseForm.value.depositAmount | number }} ر.س</strong>
+        (يُضاف لإجمالي المستحقات)
+      </div>
+    </div>
+  </div>
+
+  <!-- Navigation Buttons -->
+  <div class="d-flex justify-content-between mt-4">
+    <div>
+      <button
+        type="button"
+        class="btn btn-secondary"
+        (click)="cancel()">
+        إلغاء
+      </button>
+    </div>
+    <div class="d-flex gap-2">
+      <button
+        type="button"
+        class="btn btn-outline-secondary"
+        (click)="previousStep()"
+        *ngIf="currentStep > 1"
+        [disabled]="loading">
+        <i class="bi bi-arrow-right me-1"></i>
+        السابق
+      </button>
+
+      <button
+        type="button"
+        class="btn btn-brand"
+        (click)="nextStep()"
+        *ngIf="currentStep < 4"
+        [disabled]="!canProceed()">
+        التالي
+        <i class="bi bi-arrow-left ms-1"></i>
+      </button>
+
+      <button
+        type="button"
+        class="btn btn-success"
+        (click)="createLease()"
+        *ngIf="currentStep === 4"
+        [disabled]="loading">
+        <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
+        <i class="bi bi-check-lg me-1" *ngIf="!loading"></i>
+        إنشاء العقد
+      </button>
+    </div>
+  </div>
+</div>

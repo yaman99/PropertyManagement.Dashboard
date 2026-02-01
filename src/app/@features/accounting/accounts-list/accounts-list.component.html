@@ -1,0 +1,144 @@
+<app-page-header
+  title="دليل الحسابات"
+  icon="📋"
+  [breadcrumbs]="[
+    {label: 'الحسابات', url: '/app/accounting'},
+    {label: 'دليل الحسابات'}
+  ]">
+  <div actions>
+    <button
+      *appHasPermission="[Permission.ACCOUNTING_WRITE]"
+      class="btn btn-brand"
+      (click)="openNewAccountModal()">
+      <i class="bi bi-plus-lg"></i> حساب جديد
+    </button>
+  </div>
+</app-page-header>
+
+<!-- Filters -->
+<div class="card mb-4" dir="rtl">
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-md-4">
+        <label class="form-label">البحث</label>
+        <input
+          type="text"
+          class="form-control"
+          [(ngModel)]="searchTerm"
+          (ngModelChange)="applyFilters()"
+          placeholder="ابحث باسم الحساب...">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">نوع الحساب</label>
+        <select class="form-select" [(ngModel)]="typeFilter" (ngModelChange)="applyFilters()">
+          <option value="All">الكل</option>
+          <option [value]="LedgerAccountType.Asset">أصول</option>
+          <option [value]="LedgerAccountType.Liability">التزامات</option>
+          <option [value]="LedgerAccountType.Revenue">إيرادات</option>
+          <option [value]="LedgerAccountType.Expense">مصروفات</option>
+          <option [value]="LedgerAccountType.Equity">حقوق ملكية</option>
+        </select>
+      </div>
+      <div class="col-md-4 d-flex align-items-end">
+        <button class="btn btn-outline-secondary w-100" (click)="clearFilters()">
+          مسح الفلاتر
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Accounts Table -->
+<div class="card" dir="rtl">
+  <div class="card-body">
+    <div *ngIf="filteredAccounts.length === 0">
+      <app-empty-state
+        icon="📋"
+        title="لا توجد حسابات"
+        message="لم يتم العثور على أي حسابات">
+        <button
+          *appHasPermission="[Permission.ACCOUNTING_WRITE]"
+          class="btn btn-brand"
+          (click)="openNewAccountModal()">
+          <i class="bi bi-plus-lg"></i> حساب جديد
+        </button>
+      </app-empty-state>
+    </div>
+
+    <div *ngIf="filteredAccounts.length > 0" class="table-responsive">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>الكود</th>
+            <th>اسم الحساب</th>
+            <th>النوع</th>
+            <th>الرصيد</th>
+            <th>الإجراءات</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let account of filteredAccounts">
+            <td class="font-monospace">{{ account.id }}</td>
+            <td class="fw-bold">{{ account.name }}</td>
+            <td>
+              <span class="badge" [ngClass]="getTypeClass(account.type)">
+                {{ getTypeLabel(account.type) }}
+              </span>
+            </td>
+            <td>
+              <span [class.text-success]="account.balance >= 0" [class.text-danger]="account.balance < 0">
+                {{ account.balance | number }} ر.س
+              </span>
+            </td>
+            <td>
+              <button
+                *appHasPermission="[Permission.ACCOUNTING_WRITE]"
+                class="btn btn-sm btn-action-delete"
+                (click)="deleteAccount(account)"
+                [disabled]="account.balance !== 0"
+                title="حذف">
+                <i class="bi bi-trash-fill"></i>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- New Account Modal -->
+<div *ngIf="showNewAccountModal" class="modal fade show d-block" style="background-color: rgba(0,0,0,0.5);">
+  <div class="modal-dialog modal-dialog-centered" dir="rtl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">حساب جديد</h5>
+        <button type="button" class="btn-close" (click)="closeNewAccountModal()"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label">اسم الحساب <span class="text-danger">*</span></label>
+          <input
+            type="text"
+            class="form-control"
+            [(ngModel)]="newAccount.name"
+            placeholder="مثال: النقدية">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">نوع الحساب <span class="text-danger">*</span></label>
+          <select class="form-select" [(ngModel)]="newAccount.type">
+            <option [value]="LedgerAccountType.Asset">أصول</option>
+            <option [value]="LedgerAccountType.Liability">التزامات</option>
+            <option [value]="LedgerAccountType.Revenue">إيرادات</option>
+            <option [value]="LedgerAccountType.Expense">مصروفات</option>
+            <option [value]="LedgerAccountType.Equity">حقوق ملكية</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeNewAccountModal()">إلغاء</button>
+        <button type="button" class="btn btn-brand" (click)="saveNewAccount()">حفظ</button>
+      </div>
+    </div>
+  </div>
+</div>

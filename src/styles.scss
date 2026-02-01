@@ -1,0 +1,660 @@
+/* Import theme variables first */
+@import './theme.scss';
+
+/* Import Bootstrap with RTL support */
+@import 'bootstrap/scss/bootstrap';
+@import 'bootstrap/scss/bootstrap-utilities';
+
+/* Import Bootstrap Icons */
+@import 'bootstrap-icons/font/bootstrap-icons.css';
+
+/* ========================================
+   RTL Global Configuration
+   ======================================== */
+html {
+  direction: rtl;
+}
+
+body {
+  font-family: var(--font-family-brand);
+  background-color: var(--bg-page);
+  color: var(--color-text-body);
+  direction: rtl;
+  text-align: right;
+}
+
+/* ========================================
+   Typography
+   ======================================== */
+h1, h2, h3, h4, h5, h6,
+.h1, .h2, .h3, .h4, .h5, .h6 {
+  color: var(--color-text-heading);
+  font-weight: var(--font-weight-bold);
+}
+
+/* ========================================
+   Button Styles
+   ======================================== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+
+  i {
+    font-size: 1em;
+  }
+}
+
+.btn-primary {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: white;
+
+  &:hover {
+    background-color: var(--color-primary-hover);
+    border-color: var(--color-primary-hover);
+  }
+
+  &:active,
+  &:focus {
+    background-color: var(--color-primary-active);
+    border-color: var(--color-primary-active);
+  }
+}
+
+/* Brand Button - Add/Create Actions */
+.btn-brand {
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  color: white !important;
+  font-weight: 500;
+
+  &:hover {
+    background-color: var(--color-primary-hover) !important;
+    border-color: var(--color-primary-hover) !important;
+    color: white !important;
+  }
+
+  &:active,
+  &:focus {
+    background-color: var(--color-primary-active) !important;
+    border-color: var(--color-primary-active) !important;
+    color: white !important;
+    box-shadow: 0 0 0 0.25rem rgba(188, 133, 69, 0.25) !important;
+  }
+
+  &:disabled {
+    background-color: var(--color-primary) !important;
+    border-color: var(--color-primary) !important;
+    opacity: 0.65;
+  }
+}
+
+.btn-outline-brand {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+  background-color: transparent;
+
+  &:hover,
+  &.active {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+    color: white;
+  }
+}
+
+/* ========================================
+   RTL Button Group Fix
+   ======================================== */
+.btn-group {
+  // Fix border radius for RTL
+  > .btn:not(:last-child):not(.dropdown-toggle) {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-top-right-radius: var(--bs-btn-border-radius);
+    border-bottom-right-radius: var(--bs-btn-border-radius);
+  }
+
+  > .btn:nth-child(n+3),
+  > :not(.btn-check) + .btn {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+
+  > .btn:last-child:not(:first-child) {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-top-left-radius: var(--bs-btn-border-radius);
+    border-bottom-left-radius: var(--bs-btn-border-radius);
+  }
+
+  > .btn:first-child:last-child {
+    border-radius: var(--bs-btn-border-radius);
+  }
+}
+
+.btn-group-sm {
+  > .btn:not(:last-child):not(.dropdown-toggle) {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-top-right-radius: var(--bs-btn-border-radius-sm);
+    border-bottom-right-radius: var(--bs-btn-border-radius-sm);
+  }
+
+  > .btn:last-child:not(:first-child) {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-top-left-radius: var(--bs-btn-border-radius-sm);
+    border-bottom-left-radius: var(--bs-btn-border-radius-sm);
+  }
+}
+
+/* Table Action Buttons */
+.btn-group-sm .btn {
+  padding: 0.35rem 0.6rem;
+
+  i {
+    font-size: 0.9rem;
+  }
+}
+
+/* Action Buttons with proper styling */
+.btn-action-view {
+  background-color: var(--bs-info);
+  border-color: var(--bs-info);
+  color: white;
+
+  &:hover {
+    background-color: #31d2f2;
+    border-color: #31d2f2;
+    color: #000;
+  }
+
+  &:focus {
+    box-shadow: 0 0 0 0.25rem rgba(13, 202, 240, 0.5);
+  }
+}
+
+.btn-action-edit {
+  background-color: var(--bs-warning);
+  border-color: var(--bs-warning);
+  color: #000;
+
+  &:hover {
+    background-color: #ffca2c;
+    border-color: #ffca2c;
+    color: #000;
+  }
+
+  &:focus {
+    box-shadow: 0 0 0 0.25rem rgba(255, 193, 7, 0.5);
+  }
+}
+
+.btn-action-delete {
+  background-color: var(--bs-danger);
+  border-color: var(--bs-danger);
+  color: white;
+
+  &:hover {
+    background-color: #bb2d3b;
+    border-color: #b02a37;
+    color: white;
+  }
+
+  &:focus {
+    box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.5);
+  }
+}
+
+/* Input Group RTL Fix */
+.input-group {
+  > .form-control:not(:last-child),
+  > .form-select:not(:last-child) {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-top-right-radius: var(--bs-border-radius);
+    border-bottom-right-radius: var(--bs-border-radius);
+  }
+
+  > .form-control:not(:first-child),
+  > .form-select:not(:first-child) {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+
+  > .input-group-text:first-child {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-top-right-radius: var(--bs-border-radius);
+    border-bottom-right-radius: var(--bs-border-radius);
+  }
+
+  > .input-group-text:last-child {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-top-left-radius: var(--bs-border-radius);
+    border-bottom-left-radius: var(--bs-border-radius);
+  }
+}
+
+/* Icon alignment for RTL */
+.bi {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Dropdown RTL */
+.dropdown-menu {
+  text-align: right;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  i {
+    order: 0;
+  }
+}
+
+/* ========================================
+   Card Styles
+   ======================================== */
+.card {
+  background-color: var(--bg-card);
+  border-radius: var(--border-radius-lg);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+  text-align: right;
+
+  &:hover {
+    box-shadow: var(--shadow-md);
+    transition: box-shadow 0.2s ease-in-out;
+  }
+}
+
+.card-header {
+  background-color: var(--surface-white);
+  border-bottom: 1px solid var(--border-color);
+  font-weight: var(--font-weight-medium);
+  display: flex;
+  flex-direction: row-reverse;
+  justify-content: space-between;
+  align-items: center;
+
+  h5, h4, h3 {
+    margin: 0;
+  }
+}
+
+.card-body {
+  .row {
+    text-align: right;
+  }
+}
+
+/* ========================================
+   Form Controls
+   ======================================== */
+.form-control,
+.form-select {
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
+  text-align: right;
+
+  &:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 0.25rem rgba(188, 133, 69, 0.25);
+  }
+}
+
+.form-label {
+  text-align: right;
+  display: block;
+}
+
+.form-check {
+  padding-right: 1.5em;
+  padding-left: 0;
+  text-align: right;
+
+  .form-check-input {
+    float: right;
+    margin-right: -1.5em;
+    margin-left: 0;
+  }
+
+  .form-check-label {
+    margin-right: 0.5rem;
+  }
+}
+
+/* ========================================
+   Tables
+   ======================================== */
+.table {
+  background-color: var(--surface-white);
+  text-align: right;
+
+  thead {
+    background-color: var(--surface-200);
+    color: var(--color-text-heading);
+
+    th {
+      text-align: right;
+      white-space: nowrap;
+    }
+  }
+
+  td {
+    vertical-align: middle;
+  }
+}
+
+.table-responsive {
+  direction: rtl;
+}
+
+/* ========================================
+   Badges
+   ======================================== */
+.badge {
+  border-radius: var(--border-radius-sm);
+  font-weight: var(--font-weight-medium);
+  padding: 0.35em 0.65em;
+}
+
+/* ========================================
+   Sidebar and Layout Utilities
+   ======================================== */
+.sidebar {
+  background-color: var(--bg-sidebar);
+  border-inline-start: 1px solid var(--border-color);
+  box-shadow: var(--shadow-md);
+}
+
+.topbar {
+  background-color: var(--surface-white);
+  border-bottom: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Logo Styles */
+.app-logo {
+  max-height: 50px;
+  height: 50px;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+/* Login page logo - larger */
+.login-card .app-logo {
+  max-height: 150px;
+  height: auto;
+  max-width: 100%;
+}
+
+/* Utility Classes */
+.text-brand {
+  color: var(--color-primary);
+}
+
+.bg-brand {
+  background-color: var(--color-primary);
+}
+
+.text-muted {
+  color: var(--color-text-muted);
+}
+
+/* SweetAlert2 Custom Styling */
+.swal2-popup {
+  font-family: var(--font-family-brand);
+  border-radius: var(--border-radius-lg);
+}
+
+.swal2-confirm {
+  background-color: var(--color-primary) !important;
+
+  &:hover {
+    background-color: var(--color-primary-hover) !important;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--surface-200);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-primary);
+  border-radius: var(--border-radius);
+
+  &:hover {
+    background: var(--color-primary-hover);
+  }
+}
+
+/* Loading Spinner */
+.spinner-brand {
+  color: var(--color-primary);
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--color-text-muted);
+
+  svg,
+  i {
+    font-size: 4rem;
+    color: var(--surface-400);
+    margin-bottom: 1rem;
+  }
+}
+
+/* ========================================
+   RTL Flexbox Utilities
+   ======================================== */
+/* Fix for text alignment in containers */
+.container,
+.container-fluid {
+  text-align: right;
+}
+
+/* ========================================
+   Alert Styles
+   ======================================== */
+.alert {
+  text-align: right;
+  direction: rtl;
+
+  .btn-close {
+    margin-right: auto;
+    margin-left: 0;
+  }
+}
+
+/* ========================================
+   Modal RTL Fixes
+   ======================================== */
+.modal {
+  text-align: right;
+
+  .modal-header {
+    flex-direction: row-reverse;
+
+    .btn-close {
+      margin: -0.5rem auto -0.5rem -0.5rem;
+    }
+  }
+
+  .modal-footer {
+    flex-direction: row-reverse;
+  }
+}
+
+/* ========================================
+   Breadcrumb RTL
+   ======================================== */
+.breadcrumb {
+  flex-direction: row-reverse;
+
+  .breadcrumb-item {
+    + .breadcrumb-item::before {
+      float: right;
+      padding-left: var(--bs-breadcrumb-item-padding-x);
+      padding-right: 0;
+      content: "/";
+    }
+  }
+}
+
+/* ========================================
+   List Group RTL
+   ======================================== */
+.list-group {
+  text-align: right;
+
+  .list-group-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+}
+
+/* ========================================
+   Pagination RTL
+   ======================================== */
+.pagination {
+  flex-direction: row-reverse;
+
+  .page-item {
+    &:first-child .page-link {
+      border-radius: 0 var(--bs-pagination-border-radius) var(--bs-pagination-border-radius) 0;
+    }
+
+    &:last-child .page-link {
+      border-radius: var(--bs-pagination-border-radius) 0 0 var(--bs-pagination-border-radius);
+    }
+  }
+}
+
+/* ========================================
+   Nav Tabs RTL
+   ======================================== */
+.nav-tabs {
+  flex-direction: row-reverse;
+}
+
+.nav-pills {
+  flex-direction: row-reverse;
+}
+
+/* ========================================
+   Stats/KPI Cards
+   ======================================== */
+.stat-card {
+  text-align: right;
+
+  .stat-icon {
+    order: 2;
+  }
+
+  .stat-content {
+    order: 1;
+  }
+}
+
+/* ========================================
+   Toast RTL
+   ======================================== */
+.toast {
+  text-align: right;
+
+  .toast-header {
+    flex-direction: row-reverse;
+
+    .btn-close {
+      margin-right: auto;
+      margin-left: 0;
+    }
+  }
+}
+
+/* ========================================
+   Custom Utilities
+   ======================================== */
+.me-auto-rtl {
+  margin-right: auto !important;
+  margin-left: 0 !important;
+}
+
+.ms-auto-rtl {
+  margin-left: auto !important;
+  margin-right: 0 !important;
+}
+
+.text-start-rtl {
+  text-align: right !important;
+}
+
+.text-end-rtl {
+  text-align: left !important;
+}
+
+/* Float RTL correction */
+.float-start {
+  float: right !important;
+}
+
+.float-end {
+  float: left !important;
+}
+
+/* ========================================
+   Back Button Style
+   ======================================== */
+.btn-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--color-text-muted);
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  border-radius: var(--border-radius);
+  transition: all 0.2s ease;
+
+  &:hover {
+    color: var(--color-primary);
+    background-color: var(--surface-100);
+  }
+
+  i {
+    font-size: 1.25rem;
+  }
+}
+
+/* ========================================
+   Responsive Adjustments
+   ======================================== */
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-end;
+  }
+
+  .btn-group {
+    flex-wrap: wrap;
+  }
+}

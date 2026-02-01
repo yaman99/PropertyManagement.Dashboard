@@ -1,0 +1,226 @@
+<div class="dashboard" dir="rtl">
+  <div class="page-header mb-4">
+    <h2 class="fw-bold text-brand">لوحة التحكم</h2>
+    <p class="text-muted">مرحباً بك في نظام إدارة العقارات</p>
+  </div>
+
+  <!-- Stats Cards Row 1 -->
+  <div class="row g-4 mb-4">
+    <div class="col-md-6 col-lg-3">
+      <div class="card stat-card shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <p class="text-muted mb-1">إجمالي الوحدات</p>
+              <h3 class="fw-bold mb-0">{{ stats.totalUnits }}</h3>
+              <small class="text-success">{{ stats.availableUnits }} متاح</small>
+            </div>
+            <div class="stat-icon bg-primary">🏢</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+      <div class="card stat-card shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <p class="text-muted mb-1">وحدات مؤجرة</p>
+              <h3 class="fw-bold mb-0">{{ stats.rentedUnits }}</h3>
+              <small class="text-muted">من {{ stats.totalUnits }} وحدة</small>
+            </div>
+            <div class="stat-icon bg-success">✅</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+      <div class="card stat-card shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <p class="text-muted mb-1">عقود نشطة</p>
+              <h3 class="fw-bold mb-0">{{ stats.activeLeases }}</h3>
+              <small class="text-muted">{{ stats.totalRenters }} مستأجر</small>
+            </div>
+            <div class="stat-icon bg-info">📄</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+      <div class="card stat-card shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <p class="text-muted mb-1">الطلبات الجديدة</p>
+              <h3 class="fw-bold mb-0">{{ stats.newRequests }}</h3>
+              <small class="text-warning">تحتاج متابعة</small>
+            </div>
+            <div class="stat-icon bg-warning">📋</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats Cards Row 2 -->
+  <div class="row g-4 mb-4">
+    <div class="col-md-6 col-lg-3">
+      <div class="card stat-card shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <p class="text-muted mb-1">الملاك</p>
+              <h3 class="fw-bold mb-0">{{ stats.totalOwners }}</h3>
+            </div>
+            <div class="stat-icon bg-secondary">👤</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+      <div class="card stat-card shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <p class="text-muted mb-1">مدفوعات معلقة</p>
+              <h3 class="fw-bold mb-0">{{ stats.pendingPayments }}</h3>
+            </div>
+            <div class="stat-icon bg-warning">⏳</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+      <div class="card stat-card shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <p class="text-muted mb-1">مدفوعات متأخرة</p>
+              <h3 class="fw-bold mb-0 text-danger">{{ stats.overduePayments }}</h3>
+            </div>
+            <div class="stat-icon bg-danger">⚠️</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+      <div class="card stat-card shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <p class="text-muted mb-1">الإيرادات</p>
+              <h3 class="fw-bold mb-0 text-brand">{{ stats.totalRevenue | number }}</h3>
+              <small class="text-muted">ر.س</small>
+            </div>
+            <div class="stat-icon bg-brand">💰</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Activity -->
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card shadow-sm h-100">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">المدفوعات القادمة</h5>
+          <a routerLink="/app/leases" class="btn btn-sm btn-outline-brand">عرض الكل</a>
+        </div>
+        <div class="card-body">
+          <div *ngIf="upcomingPayments.length === 0" class="text-center py-4 text-muted">
+            <div class="fs-1 mb-2">📅</div>
+            <p>لا توجد مدفوعات قادمة</p>
+          </div>
+
+          <div *ngIf="upcomingPayments.length > 0">
+            <div *ngFor="let item of upcomingPayments" class="d-flex justify-content-between align-items-center py-2 border-bottom">
+              <div>
+                <div class="fw-bold">{{ item.unit?.unitCode || 'وحدة' }}</div>
+                <small class="text-muted">{{ item.renter?.fullName || 'مستأجر' }}</small>
+              </div>
+              <div class="text-end">
+                <div class="fw-bold text-brand">{{ item.payment.amount | number }} ر.س</div>
+                <small class="text-muted">{{ formatDate(item.payment.dueDate) }}</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card shadow-sm h-100">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">الطلبات الأخيرة</h5>
+          <a routerLink="/app/requests" class="btn btn-sm btn-outline-brand">عرض الكل</a>
+        </div>
+        <div class="card-body">
+          <div *ngIf="recentRequests.length === 0" class="text-center py-4 text-muted">
+            <div class="fs-1 mb-2">📋</div>
+            <p>لا توجد طلبات حديثة</p>
+          </div>
+
+          <div *ngIf="recentRequests.length > 0">
+            <div *ngFor="let request of recentRequests" class="d-flex justify-content-between align-items-center py-2 border-bottom">
+              <div>
+                <div class="fw-bold">{{ request.title }}</div>
+                <small class="text-muted">{{ formatDate(request.createdAt) }}</small>
+              </div>
+              <span class="badge" [ngClass]="getRequestStatusClass(request.status)">
+                {{ getRequestStatusLabel(request.status) }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="row g-4 mt-4">
+    <div class="col-12">
+      <div class="card shadow-sm">
+        <div class="card-header bg-white">
+          <h5 class="mb-0">إجراءات سريعة</h5>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-3 col-6">
+              <a routerLink="/app/units/new" class="btn btn-outline-primary w-100 py-3">
+                <i class="bi bi-plus-lg d-block fs-4 mb-1"></i>
+                إضافة وحدة
+              </a>
+            </div>
+            <div class="col-md-3 col-6">
+              <a routerLink="/app/renters/new" class="btn btn-outline-success w-100 py-3">
+                <i class="bi bi-person-plus d-block fs-4 mb-1"></i>
+                إضافة مستأجر
+              </a>
+            </div>
+            <div class="col-md-3 col-6">
+              <a routerLink="/app/leases/new" class="btn btn-outline-info w-100 py-3">
+                <i class="bi bi-file-earmark-plus d-block fs-4 mb-1"></i>
+                عقد جديد
+              </a>
+            </div>
+            <div class="col-md-3 col-6">
+              <a routerLink="/app/requests/new" class="btn btn-outline-warning w-100 py-3">
+                <i class="bi bi-clipboard-plus d-block fs-4 mb-1"></i>
+                طلب جديد
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

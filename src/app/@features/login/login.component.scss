@@ -1,0 +1,36 @@
+.login-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--surface-100) 0%, var(--surface-300) 100%);
+  padding: 2rem;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 450px;
+  border: none;
+  border-radius: var(--border-radius-lg);
+}
+
+.demo-accounts {
+  background-color: var(--surface-100);
+  padding: 1rem;
+  border-radius: var(--border-radius);
+
+  small {
+    color: var(--color-text-body);
+    line-height: 1.8;
+  }
+}
+
+.form-control-lg {
+  font-size: 1rem;
+  padding: 0.75rem 1rem;
+}
+
+.app-logo {
+  max-height: 80px;
+  object-fit: contain;
+}

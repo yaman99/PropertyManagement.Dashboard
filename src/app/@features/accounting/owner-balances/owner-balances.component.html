@@ -1,0 +1,228 @@
+<app-page-header
+  title="أرصدة الملاك"
+  icon="👥"
+  [breadcrumbs]="[
+    {label: 'الحسابات', url: '/app/accounting'},
+    {label: 'أرصدة الملاك'}
+  ]">
+</app-page-header>
+
+<div dir="rtl">
+  <!-- Summary Card -->
+  <div class="row mb-4">
+    <div class="col-md-4">
+      <div class="card bg-warning text-dark">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h6 class="mb-1">إجمالي مستحقات الملاك</h6>
+              <h2 class="mb-0">{{ totalOwed | number }} ر.س</h2>
+            </div>
+            <i class="bi bi-wallet2 fs-1 opacity-50"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="isLoading" class="text-center py-5">
+    <div class="spinner-border text-brand" role="status">
+      <span class="visually-hidden">جاري التحميل...</span>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!isLoading && ownerBalances.length === 0" class="card">
+    <div class="card-body text-center py-5">
+      <div class="fs-1 mb-3">👥</div>
+      <h5>لا توجد حسابات ملاك</h5>
+      <p class="text-muted">سيتم إنشاء حسابات الملاك تلقائياً عند إضافة ملاك جدد</p>
+    </div>
+  </div>
+
+  <!-- Owner Balances Table -->
+  <div *ngIf="!isLoading && ownerBalances.length > 0" class="card">
+    <div class="card-header bg-white">
+      <h5 class="mb-0">قائمة الملاك</h5>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>المالك</th>
+              <th>رقم الهاتف</th>
+              <th>رقم الحساب</th>
+              <th class="text-center">الرصيد المستحق</th>
+              <th class="text-center">الإجراءات</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let ob of ownerBalances">
+              <td>
+                <div class="d-flex align-items-center">
+                  <div class="avatar bg-brand text-white rounded-circle d-flex align-items-center justify-content-center me-2"
+                       style="width: 40px; height: 40px;">
+                    {{ ob.owner.fullName.charAt(0) }}
+                  </div>
+                  <div>
+                    <div class="fw-bold">{{ ob.owner.fullName }}</div>
+                    <small class="text-muted">{{ ob.owner.email }}</small>
+                  </div>
+                </div>
+              </td>
+              <td>{{ ob.owner.phone }}</td>
+              <td>
+                <code>{{ ob.account?.code || '-' }}</code>
+              </td>
+              <td class="text-center">
+                <span [class.text-success]="ob.balance > 0"
+                      [class.text-muted]="ob.balance === 0"
+                      class="fw-bold fs-5">
+                  {{ ob.balance | number }} ر.س
+                </span>
+              </td>
+              <td class="text-center">
+                <div class="btn-group">
+                  <button class="btn btn-sm btn-outline-brand"
+                          (click)="openHistoryModal(ob)"
+                          title="سجل الحركات">
+                    <i class="bi bi-clock-history"></i>
+                  </button>
+                  <button class="btn btn-sm btn-success"
+                          *appHasPermission="[Permission.ACCOUNTING_WRITE]"
+                          [disabled]="ob.balance <= 0"
+                          (click)="openPayModal(ob)"
+                          title="صرف مبلغ">
+                    <i class="bi bi-cash-coin"></i> صرف
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Pay Owner Modal -->
+<div class="modal fade" [class.show]="showPayModal" [style.display]="showPayModal ? 'block' : 'none'"
+     tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-dialog-centered" dir="rtl">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title">
+          <i class="bi bi-cash-coin me-2"></i>
+          صرف مبلغ للمالك
+        </h5>
+        <button type="button" class="btn-close btn-close-white" (click)="closePayModal()"></button>
+      </div>
+      <div class="modal-body" *ngIf="selectedOwner">
+        <div class="alert alert-info mb-3">
+          <div class="d-flex justify-content-between">
+            <span>المالك: <strong>{{ selectedOwner.owner.fullName }}</strong></span>
+            <span>الرصيد: <strong>{{ selectedOwner.balance | number }} ر.س</strong></span>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">المبلغ <span class="text-danger">*</span></label>
+          <div class="input-group">
+            <input type="number" class="form-control" [(ngModel)]="paymentForm.amount"
+                   [max]="selectedOwner.balance" min="1">
+            <span class="input-group-text">ر.س</span>
+          </div>
+          <div class="form-text">الحد الأقصى: {{ selectedOwner.balance | number }} ر.س</div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">طريقة الدفع</label>
+          <select class="form-select" [(ngModel)]="paymentForm.paymentMethod">
+            <option value="bank_transfer">تحويل بنكي</option>
+            <option value="check">شيك</option>
+            <option value="cash">نقدي</option>
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">ملاحظات</label>
+          <textarea class="form-control" rows="2" [(ngModel)]="paymentForm.note"
+                    placeholder="ملاحظات اختيارية..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-light" (click)="closePayModal()">إلغاء</button>
+        <button type="button" class="btn btn-success" (click)="submitPayment()"
+                [disabled]="isProcessing || !paymentForm.amount">
+          <span *ngIf="isProcessing" class="spinner-border spinner-border-sm me-1"></span>
+          <i *ngIf="!isProcessing" class="bi bi-check-lg me-1"></i>
+          تأكيد الصرف
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade show" *ngIf="showPayModal" (click)="closePayModal()"></div>
+
+<!-- Transaction History Modal -->
+<div class="modal fade" [class.show]="showHistoryModal" [style.display]="showHistoryModal ? 'block' : 'none'"
+     tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-lg modal-dialog-centered" dir="rtl">
+    <div class="modal-content">
+      <div class="modal-header bg-brand text-white">
+        <h5 class="modal-title">
+          <i class="bi bi-clock-history me-2"></i>
+          سجل حركات المالك
+        </h5>
+        <button type="button" class="btn-close btn-close-white" (click)="closeHistoryModal()"></button>
+      </div>
+      <div class="modal-body" *ngIf="historyOwner">
+        <div class="alert alert-light mb-3">
+          <strong>{{ historyOwner.owner.fullName }}</strong>
+          <span class="float-start">الرصيد الحالي: <strong class="text-success">{{ historyOwner.balance | number }} ر.س</strong></span>
+        </div>
+
+        <div *ngIf="transactions.length === 0" class="text-center py-4 text-muted">
+          لا توجد حركات سابقة
+        </div>
+
+        <div *ngIf="transactions.length > 0" class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+          <table class="table table-sm table-hover mb-0">
+            <thead class="table-light sticky-top">
+              <tr>
+                <th>التاريخ</th>
+                <th>البيان</th>
+                <th class="text-center">مدين</th>
+                <th class="text-center">دائن</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let tx of transactions">
+                <td>{{ formatDate(tx.date) }}</td>
+                <td>{{ tx.note }}</td>
+                <td class="text-center">
+                  <span *ngIf="tx.debit > 0" class="text-danger">
+                    {{ tx.debit | number }}
+                  </span>
+                  <span *ngIf="tx.debit === 0">-</span>
+                </td>
+                <td class="text-center">
+                  <span *ngIf="tx.credit > 0" class="text-success">
+                    {{ tx.credit | number }}
+                  </span>
+                  <span *ngIf="tx.credit === 0">-</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-light" (click)="closeHistoryModal()">إغلاق</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade show" *ngIf="showHistoryModal" (click)="closeHistoryModal()"></div>

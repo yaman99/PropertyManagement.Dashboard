@@ -1,0 +1,76 @@
+<app-page-header
+  title="الأدوار والصلاحيات"
+  icon="🔐"
+  [breadcrumbs]="[{label: 'الأدوار والصلاحيات'}]">
+</app-page-header>
+
+<div dir="rtl">
+  <!-- Info Alert -->
+  <div class="alert alert-info mb-4">
+    <i class="bi bi-info-circle me-2"></i>
+    يمكنك تخصيص صلاحيات كل دور بالضغط على "إدارة الصلاحيات". الأدوار الأساسية لا يمكن حذفها.
+  </div>
+
+  <!-- Roles Grid -->
+  <div class="row g-4">
+    <div *ngFor="let role of roles" class="col-md-6 col-lg-3">
+      <div class="card h-100 role-card">
+        <div class="card-body text-center">
+          <div class="role-icon mb-3">{{ getRoleIcon(role.name) }}</div>
+          <h5 class="card-title mb-1">{{ getRoleNameArabic(role.name) }}</h5>
+          <p class="text-muted small mb-3">{{ role.description }}</p>
+
+          <div class="permissions-badge mb-3">
+            <span class="badge bg-brand">
+              {{ getPermissionCount(role) }} / {{ getTotalPermissions() }} صلاحية
+            </span>
+          </div>
+
+          <!-- Progress Bar -->
+          <div class="progress mb-3" style="height: 6px;">
+            <div
+              class="progress-bar bg-brand"
+              [style.width.%]="(getPermissionCount(role) / getTotalPermissions()) * 100">
+            </div>
+          </div>
+
+          <a
+            *appHasPermission="[Permission.ROLES_MANAGE]"
+            [routerLink]="[role.name]"
+            class="btn btn-outline-brand btn-sm w-100">
+            <i class="bi bi-gear"></i> إدارة الصلاحيات
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Permissions Legend -->
+  <div class="card mt-4">
+    <div class="card-header bg-white">
+      <h5 class="mb-0">دليل الصلاحيات</h5>
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <div class="d-flex align-items-center">
+            <span class="badge bg-secondary me-2">READ</span>
+            <span>عرض وقراءة البيانات</span>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="d-flex align-items-center">
+            <span class="badge bg-primary me-2">WRITE</span>
+            <span>إضافة وتعديل وحذف</span>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="d-flex align-items-center">
+            <span class="badge bg-danger me-2">MANAGE</span>
+            <span>إدارة كاملة</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

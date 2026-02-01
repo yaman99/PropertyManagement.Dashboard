@@ -1,0 +1,91 @@
+<app-page-header
+  [title]="role ? 'صلاحيات ' + getRoleNameArabic(role.name) : 'صلاحيات الدور'"
+  icon="🔐"
+  [breadcrumbs]="[
+    {label: 'الأدوار والصلاحيات', url: '/app/admin/roles'},
+    {label: role ? getRoleNameArabic(role.name) : 'الصلاحيات'}
+  ]">
+  <div actions>
+    <button class="btn btn-outline-secondary me-2" (click)="goBack()">
+      <i class="bi bi-arrow-right"></i> رجوع
+    </button>
+    <button class="btn btn-brand" (click)="saveChanges()">
+      <i class="bi bi-check-lg"></i> حفظ التغييرات
+    </button>
+  </div>
+</app-page-header>
+
+<div *ngIf="role" dir="rtl">
+  <!-- Role Info -->
+  <div class="alert alert-light border mb-4">
+    <div class="d-flex align-items-center">
+      <div class="me-3 fs-1">
+        {{ roleName === 'Admin' ? '👑' : roleName === 'Accountant' ? '💼' : roleName === 'Owner' ? '🏠' : '🔑' }}
+      </div>
+      <div>
+        <h5 class="mb-1">{{ getRoleNameArabic(role.name) }}</h5>
+        <p class="mb-0 text-muted">{{ role.description }}</p>
+      </div>
+      <div class="ms-auto">
+        <button class="btn btn-sm btn-outline-secondary" (click)="resetToDefault()">
+          <i class="bi bi-arrow-counterclockwise"></i> إعادة تعيين
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Permission Groups -->
+  <div class="row g-4">
+    <div *ngFor="let group of permissionGroups" class="col-md-6">
+      <div class="card h-100">
+        <div class="card-header bg-white d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center">
+            <span class="me-2 fs-4">{{ group.icon }}</span>
+            <h6 class="mb-0">{{ group.name }}</h6>
+          </div>
+          <div class="form-check form-switch">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              [checked]="isGroupFullyEnabled(group)"
+              [indeterminate]="isGroupPartiallyEnabled(group)"
+              (change)="toggleGroupPermissions(group, $any($event.target).checked)">
+          </div>
+        </div>
+        <div class="card-body">
+          <div *ngFor="let perm of group.permissions" class="form-check mb-2">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              [id]="perm.key"
+              [checked]="hasPermission(perm.key)"
+              (change)="togglePermission(perm.key)">
+            <label class="form-check-label d-flex align-items-center" [for]="perm.key">
+              <span class="badge me-2" [ngClass]="getPermissionTypeClass(perm.type)">
+                {{ perm.type === 'read' ? 'قراءة' : perm.type === 'write' ? 'كتابة' : 'إدارة' }}
+              </span>
+              {{ perm.label }}
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Save Button (Bottom) -->
+  <div class="d-flex justify-content-end gap-2 mt-4">
+    <button class="btn btn-secondary" (click)="goBack()">إلغاء</button>
+    <button class="btn btn-brand" (click)="saveChanges()">
+      <i class="bi bi-check-lg"></i> حفظ التغييرات
+    </button>
+  </div>
+</div>
+
+<!-- Not Found -->
+<div *ngIf="!role" class="text-center py-5" dir="rtl">
+  <div class="display-1 mb-3">❓</div>
+  <h4>الدور غير موجود</h4>
+  <button class="btn btn-brand" (click)="goBack()">
+    العودة للقائمة
+  </button>
+</div>

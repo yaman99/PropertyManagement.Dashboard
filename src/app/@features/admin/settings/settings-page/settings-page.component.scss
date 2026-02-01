@@ -1,0 +1,42 @@
+.list-group-item.active {
+  background-color: var(--brand-color);
+  border-color: var(--brand-color);
+}
+
+.btn-brand {
+  background-color: var(--brand-color);
+  border-color: var(--brand-color);
+  color: white;
+
+  &:hover {
+    background-color: #a67339;
+    border-color: #a67339;
+    color: white;
+  }
+}
+
+.btn-outline-brand {
+  color: var(--brand-color);
+  border-color: var(--brand-color);
+
+  &:hover {
+    background-color: var(--brand-color);
+    color: white;
+  }
+}
+
+.form-check-input:checked {
+  background-color: var(--brand-color);
+  border-color: var(--brand-color);
+}
+
+.logo-placeholder {
+  width: 80px;
+  height: 80px;
+  border: 2px dashed #ddd;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8f9fa;
+}

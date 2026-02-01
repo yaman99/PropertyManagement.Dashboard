@@ -1,0 +1,201 @@
+<app-page-header
+  [title]="isEditMode ? 'تعديل وحدة' : 'إضافة وحدة جديدة'"
+  icon="🏢"
+  [breadcrumbs]="[
+    {label: 'الوحدات', url: '/app/units'},
+    {label: isEditMode ? 'تعديل' : 'جديد'}
+  ]"
+  [showActions]="false">
+</app-page-header>
+
+<div class="card" dir="rtl">
+  <div class="card-body">
+    <form [formGroup]="unitForm" (ngSubmit)="onSubmit()">
+
+      <!-- Ownership Type Selection -->
+      <h5 class="mb-3 text-brand">نوع الملكية</h5>
+      <div class="row g-3 mb-4">
+        <div class="col-md-12">
+          <div class="btn-group w-100" role="group">
+            <input type="radio" class="btn-check" id="ownershipBuilding"
+              formControlName="ownershipType" [value]="'building'">
+            <label class="btn btn-outline-brand" for="ownershipBuilding">
+              🏗️ وحدة ضمن مبنى
+              <small class="d-block text-muted">الوحدة تتبع مبنى ومالكه</small>
+            </label>
+
+            <input type="radio" class="btn-check" id="ownershipIndividual"
+              formControlName="ownershipType" [value]="'individual'">
+            <label class="btn btn-outline-brand" for="ownershipIndividual">
+              🏠 وحدة مستقلة
+              <small class="d-block text-muted">مالك فردي للوحدة</small>
+            </label>
+          </div>
+        </div>
+
+        <!-- Building Selection (when ownership = building) -->
+        <div class="col-md-6" *ngIf="unitForm.get('ownershipType')?.value === 'building'">
+          <label class="form-label">المبنى <span class="text-danger">*</span></label>
+          <select
+            class="form-select"
+            formControlName="buildingId"
+            (change)="onBuildingChange()"
+            [class.is-invalid]="unitForm.get('buildingId')?.invalid && unitForm.get('buildingId')?.touched">
+            <option value="">اختر المبنى...</option>
+            <option *ngFor="let building of buildings$ | async" [value]="building.id">
+              {{ building.name }} - {{ building.ownerName }}
+            </option>
+          </select>
+          <div class="invalid-feedback">يرجى اختيار المبنى</div>
+        </div>
+
+        <!-- Owner info display (when building selected) -->
+        <div class="col-md-6" *ngIf="unitForm.get('ownershipType')?.value === 'building' && selectedBuilding">
+          <label class="form-label">المالك</label>
+          <div class="form-control bg-light">
+            <i class="bi bi-person"></i> {{ selectedBuilding.ownerName }}
+            <small class="text-muted d-block">المالك يتم تحديده تلقائياً من المبنى</small>
+          </div>
+        </div>
+
+        <!-- Owner Selection (when ownership = individual) -->
+        <div class="col-md-6" *ngIf="unitForm.get('ownershipType')?.value === 'individual'">
+          <label class="form-label">المالك <span class="text-danger">*</span></label>
+          <select
+            class="form-select"
+            formControlName="ownerId"
+            [class.is-invalid]="unitForm.get('ownerId')?.invalid && unitForm.get('ownerId')?.touched">
+            <option value="">اختر المالك...</option>
+            <option *ngFor="let owner of owners$ | async" [value]="owner.id">
+              {{ owner.fullName }}
+            </option>
+          </select>
+          <div class="invalid-feedback">يرجى اختيار المالك</div>
+        </div>
+
+        <!-- Building Name (manual for individual) -->
+        <div class="col-md-6" *ngIf="unitForm.get('ownershipType')?.value === 'individual'">
+          <label class="form-label">اسم المبنى/الموقع</label>
+          <input
+            type="text"
+            class="form-control"
+            formControlName="buildingName"
+            placeholder="اسم المبنى أو المجمع (اختياري)">
+        </div>
+      </div>
+
+      <hr class="my-4">
+
+      <!-- Basic Info -->
+      <h5 class="mb-3 text-brand">معلومات الوحدة</h5>
+      <div class="row g-3 mb-4">
+        <!-- Unit Code -->
+        <div class="col-md-4">
+          <label class="form-label">كود الوحدة <span class="text-danger">*</span></label>
+          <input
+            type="text"
+            class="form-control"
+            formControlName="unitCode"
+            [class.is-invalid]="unitForm.get('unitCode')?.invalid && unitForm.get('unitCode')?.touched"
+            placeholder="مثال: APT-101">
+          <div class="invalid-feedback">
+            {{ getErrorMessage('unitCode') }}
+          </div>
+        </div>
+
+        <!-- Type -->
+        <div class="col-md-4">
+          <label class="form-label">نوع الوحدة <span class="text-danger">*</span></label>
+          <select class="form-select" formControlName="type">
+            <option *ngFor="let type of unitTypes" [value]="type">
+              {{ getUnitTypeLabel(type) }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Status -->
+        <div class="col-md-4">
+          <label class="form-label">الحالة <span class="text-danger">*</span></label>
+          <select class="form-select" formControlName="status">
+            <option *ngFor="let status of unitStatuses" [value]="status">
+              {{ getStatusLabel(status) }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Floor -->
+        <div class="col-md-3">
+          <label class="form-label">الطابق</label>
+          <input
+            type="number"
+            class="form-control"
+            formControlName="floor"
+            placeholder="3">
+        </div>
+
+        <!-- Rooms -->
+        <div class="col-md-3">
+          <label class="form-label">عدد الغرف</label>
+          <input
+            type="number"
+            class="form-control"
+            formControlName="rooms"
+            placeholder="3">
+        </div>
+
+        <!-- Area -->
+        <div class="col-md-3">
+          <label class="form-label">المساحة (م²)</label>
+          <input
+            type="number"
+            class="form-control"
+            formControlName="areaSqm"
+            placeholder="100">
+        </div>
+
+        <!-- Rent Price -->
+        <div class="col-md-3">
+          <label class="form-label">الإيجار الشهري <span class="text-danger">*</span></label>
+          <div class="input-group">
+            <input
+              type="number"
+              class="form-control"
+              formControlName="rentPrice"
+              [class.is-invalid]="unitForm.get('rentPrice')?.invalid && unitForm.get('rentPrice')?.touched"
+              placeholder="5000">
+            <span class="input-group-text">ر.س</span>
+          </div>
+        </div>
+
+        <!-- Publish Toggle -->
+        <div class="col-md-12">
+          <div class="publish-toggle-container">
+            <div class="d-flex align-items-center justify-content-between">
+              <div>
+                <label class="form-label mb-0">نشر الوحدة للعملاء</label>
+                <small class="d-block text-muted">السماح بظهور الوحدة في صفحة الوحدات العامة</small>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" formControlName="isPublished">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <hr class="my-4">
+
+      <!-- Actions -->
+      <div class="d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-secondary" (click)="cancel()" [disabled]="loading">
+          إلغاء
+        </button>
+        <button type="submit" class="btn btn-brand" [disabled]="loading">
+          <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
+          {{ isEditMode ? 'حفظ التعديلات' : 'إضافة الوحدة' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

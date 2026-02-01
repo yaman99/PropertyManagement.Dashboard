@@ -1,0 +1,182 @@
+<ng-container *ngIf="inquiry$ | async as inquiry">
+  <app-page-header
+    [title]="'استفسار من ' + inquiry.fullName"
+    icon="📨"
+    [breadcrumbs]="[{label: 'الاستفسارات', url: '/app/inquiries'}, {label: inquiry.fullName}]">
+    <div actions>
+      <button class="btn btn-outline-secondary" [routerLink]="['/app/inquiries']">
+        <i class="bi bi-arrow-right"></i> رجوع
+      </button>
+    </div>
+  </app-page-header>
+
+  <div class="row" dir="rtl">
+    <!-- Customer Information -->
+    <div class="col-md-8">
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">معلومات العميل</h5>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="text-muted small">الاسم الكامل</label>
+              <p class="fw-bold">{{ inquiry.fullName }}</p>
+            </div>
+            <div class="col-md-6">
+              <label class="text-muted small">البريد الإلكتروني</label>
+              <p class="fw-bold">
+                <a [href]="'mailto:' + inquiry.email">{{ inquiry.email }}</a>
+              </p>
+            </div>
+            <div class="col-md-6">
+              <label class="text-muted small">رقم الهاتف</label>
+              <p class="fw-bold">
+                <a [href]="'tel:' + inquiry.phone">{{ inquiry.phone }}</a>
+              </p>
+            </div>
+            <div class="col-md-6" *ngIf="inquiry.nationality">
+              <label class="text-muted small">الجنسية</label>
+              <p class="fw-bold">{{ inquiry.nationality }}</p>
+            </div>
+            <div class="col-md-6" *ngIf="inquiry.preferredMoveInDate">
+              <label class="text-muted small">تاريخ الانتقال المفضل</label>
+              <p class="fw-bold">{{ inquiry.preferredMoveInDate | date:'dd/MM/yyyy' }}</p>
+            </div>
+            <div class="col-md-6" *ngIf="inquiry.numberOfOccupants">
+              <label class="text-muted small">عدد الأفراد</label>
+              <p class="fw-bold">{{ inquiry.numberOfOccupants }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Inquiry Message -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">رسالة الاستفسار</h5>
+        </div>
+        <div class="card-body">
+          <p class="text-muted">{{ inquiry.message }}</p>
+        </div>
+      </div>
+
+      <!-- Admin Notes -->
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">ملاحظات الإدارة</h5>
+        </div>
+        <div class="card-body">
+          <form [formGroup]="form">
+            <div class="mb-3">
+              <label class="form-label">الملاحظات</label>
+              <textarea
+                class="form-control"
+                formControlName="adminNotes"
+                rows="4"
+                placeholder="أضف ملاحظات داخلية حول هذا الاستفسار..."></textarea>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">تعيين إلى</label>
+              <input
+                type="text"
+                class="form-control"
+                formControlName="assignedTo"
+                placeholder="اسم الموظف المسؤول">
+            </div>
+            <button
+              type="button"
+              class="btn btn-brand"
+              (click)="saveChanges(inquiry)">
+              <i class="bi bi-save"></i> حفظ الملاحظات
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-md-4">
+      <!-- Status Card -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">الحالة</h5>
+        </div>
+        <div class="card-body">
+          <form [formGroup]="form">
+            <div class="mb-3">
+              <label class="form-label">حالة الاستفسار</label>
+              <select class="form-select" formControlName="status">
+                <option [value]="InquiryStatus.New">جديد</option>
+                <option [value]="InquiryStatus.Contacted">تم التواصل</option>
+                <option [value]="InquiryStatus.Qualified">مؤهل</option>
+                <option [value]="InquiryStatus.Rejected">مرفوض</option>
+                <option [value]="InquiryStatus.Converted">تم التحويل</option>
+              </select>
+            </div>
+            <button
+              type="button"
+              class="btn btn-primary w-100"
+              (click)="saveChanges(inquiry)">
+              <i class="bi bi-check-circle"></i> تحديث الحالة
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Unit Info -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">معلومات الوحدة</h5>
+        </div>
+        <div class="card-body">
+          <p>
+            <span class="text-muted">كود الوحدة:</span><br>
+            <strong>{{ inquiry.unitCode || inquiry.unitId }}</strong>
+          </p>
+          <a [routerLink]="['/app/units/edit', inquiry.unitId]" class="btn btn-sm btn-outline-primary">
+            <i class="bi bi-eye"></i> عرض الوحدة
+          </a>
+        </div>
+      </div>
+
+      <!-- Timeline -->
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">التوقيتات</h5>
+        </div>
+        <div class="card-body">
+          <div class="timeline">
+            <div class="timeline-item">
+              <div class="timeline-icon bg-primary">
+                <i class="bi bi-plus-circle"></i>
+              </div>
+              <div class="timeline-content">
+                <small class="text-muted">تم الإنشاء</small><br>
+                <strong>{{ inquiry.createdAt | date:'dd/MM/yyyy HH:mm' }}</strong>
+              </div>
+            </div>
+            <div class="timeline-item" *ngIf="inquiry.contactedAt">
+              <div class="timeline-icon bg-info">
+                <i class="bi bi-telephone"></i>
+              </div>
+              <div class="timeline-content">
+                <small class="text-muted">تم التواصل</small><br>
+                <strong>{{ inquiry.contactedAt | date:'dd/MM/yyyy HH:mm' }}</strong>
+              </div>
+            </div>
+            <div class="timeline-item" *ngIf="inquiry.convertedAt">
+              <div class="timeline-icon bg-success">
+                <i class="bi bi-check-circle"></i>
+              </div>
+              <div class="timeline-content">
+                <small class="text-muted">تم التحويل</small><br>
+                <strong>{{ inquiry.convertedAt | date:'dd/MM/yyyy HH:mm' }}</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</ng-container>

@@ -1,0 +1,13 @@
+.form-label {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.text-danger {
+  color: var(--color-error) !important;
+}
+
+h5.text-brand {
+  border-bottom: 2px solid var(--brand-primary);
+  padding-bottom: 0.5rem;
+}

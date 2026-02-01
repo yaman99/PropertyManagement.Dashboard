@@ -1,0 +1,132 @@
+<app-page-header
+  title="إدارة العقود"
+  icon="📄"
+  [breadcrumbs]="[{label: 'العقود'}]">
+  <div actions>
+    <button
+      *appHasPermission="[Permission.LEASES_WRITE]"
+      class="btn btn-brand"
+      [routerLink]="['new']">
+      <i class="bi bi-plus-lg"></i> إنشاء عقد جديد
+    </button>
+  </div>
+</app-page-header>
+
+<!-- Filters -->
+<div class="card mb-4" dir="rtl">
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-md-3">
+        <label class="form-label">حالة العقد</label>
+        <select class="form-select" [(ngModel)]="statusFilter" (ngModelChange)="applyFilters()">
+          <option value="All">الكل</option>
+          <option [value]="LeaseStatus.Draft">مسودة</option>
+          <option [value]="LeaseStatus.Active">نشط</option>
+          <option [value]="LeaseStatus.Expired">منتهي</option>
+          <option [value]="LeaseStatus.Cancelled">ملغي</option>
+        </select>
+      </div>
+      <div class="col-md-2 d-flex align-items-end">
+        <button class="btn btn-outline-secondary w-100" (click)="clearFilters()">
+          مسح الفلاتر
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Loading -->
+<div *ngIf="loading$ | async" class="text-center py-5">
+  <div class="spinner-border text-brand" role="status">
+    <span class="visually-hidden">جاري التحميل...</span>
+  </div>
+</div>
+
+<!-- Leases Table -->
+<div *ngIf="!(loading$ | async)" class="card" dir="rtl">
+  <div class="card-body">
+    <ng-container *ngIf="(filteredLeases$ | async) as leases">
+      <div *ngIf="leases.length === 0">
+        <app-empty-state
+          icon="📄"
+          title="لا توجد عقود"
+          message="لم يتم العثور على أي عقود. ابدأ بإنشاء عقد جديد">
+          <button
+            *appHasPermission="[Permission.LEASES_WRITE]"
+            class="btn btn-brand"
+            [routerLink]="['new']">
+            <i class="bi bi-plus-lg"></i> إنشاء عقد جديد
+          </button>
+        </app-empty-state>
+      </div>
+
+      <div *ngIf="leases.length > 0" class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>الوحدة</th>
+              <th>المستأجر</th>
+              <th>تاريخ البداية</th>
+              <th>تاريخ النهاية</th>
+              <th>دورة الدفع</th>
+              <th>قيمة الإيجار</th>
+              <th>التحصيل</th>
+              <th>الحالة</th>
+              <th>الإجراءات</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let lease of leases">
+              <td>
+                <span class="fw-bold">{{ getUnitCode(lease.unitId) | async }}</span>
+              </td>
+              <td>{{ getRenterName(lease.renterId) | async }}</td>
+              <td>{{ formatDate(lease.startDate) }}</td>
+              <td>{{ formatDate(lease.endDate) }}</td>
+              <td>
+                <span class="badge bg-info">{{ getPaymentCycleLabel(lease.paymentCycle) }}</span>
+              </td>
+              <td>
+                <span class="text-brand fw-bold">
+                  {{ lease.rentAmount | number }} ر.س
+                </span>
+              </td>
+              <td>
+                <ng-container *ngIf="getPaymentProgress(lease) as progress">
+                  <div class="progress" style="height: 20px; width: 100px;">
+                    <div
+                      class="progress-bar bg-success"
+                      role="progressbar"
+                      [style.width.%]="progress.percentage">
+                      {{ progress.paid }}/{{ progress.total }}
+                    </div>
+                  </div>
+                </ng-container>
+              </td>
+              <td>
+                <app-status-badge [status]="lease.status"></app-status-badge>
+              </td>
+              <td>
+                <div class="btn-group btn-group-sm" role="group">
+                  <button
+                    class="btn btn-action-view"
+                    [routerLink]="[lease.id]"
+                    title="عرض التفاصيل">
+                    <i class="bi bi-eye-fill"></i>
+                  </button>
+                  <button
+                    *appHasPermission="[Permission.LEASES_WRITE]"
+                    class="btn btn-action-delete"
+                    (click)="cancelLease(lease)"
+                    title="إلغاء العقد">
+                    <i class="bi bi-x-circle-fill"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </ng-container>
+  </div>
+</div>

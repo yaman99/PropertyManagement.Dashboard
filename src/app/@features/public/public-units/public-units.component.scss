@@ -1,0 +1,18 @@
+.public-header {
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
+  color: white;
+}
+
+.unit-card {
+  transition: transform 0.2s, box-shadow 0.2s;
+  border: 1px solid var(--border-color);
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  }
+
+  .card-img-top {
+    border-bottom: 1px solid var(--border-color);
+  }
+}

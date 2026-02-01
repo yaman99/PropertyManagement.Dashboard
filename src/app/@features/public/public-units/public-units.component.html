@@ -1,0 +1,103 @@
+<!-- Public Header -->
+<div class="public-header py-5 text-center">
+  <div class="container">
+    <img src="/assets/branding/logo-white-bg-with-name.jpeg" alt="Omar Almarbie Real Estate" class="mb-4" style="max-height: 120px;">
+    <p class="lead">اكتشف وحداتنا المتاحة للإيجار</p>
+  </div>
+</div>
+
+<!-- Filters -->
+<div class="container my-4">
+  <div class="card">
+    <div class="card-body">
+      <div class="row g-3" dir="rtl">
+        <div class="col-md-4">
+          <label class="form-label">البحث</label>
+          <input
+            type="text"
+            class="form-control"
+            [(ngModel)]="searchTerm"
+            placeholder="ابحث بكود الوحدة...">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">نوع الوحدة</label>
+          <select class="form-select" [(ngModel)]="typeFilter">
+            <option value="All">جميع الأنواع</option>
+            <option [value]="UnitType.Apartment">شقة</option>
+            <option [value]="UnitType.Villa">فيلا</option>
+            <option [value]="UnitType.Office">مكتب</option>
+            <option [value]="UnitType.Shop">محل</option>
+            <option [value]="UnitType.Warehouse">مستودع</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">نطاق السعر</label>
+          <select class="form-select">
+            <option value="">جميع الأسعار</option>
+            <option value="0-5000">أقل من 5,000 ر.س</option>
+            <option value="5000-10000">5,000 - 10,000 ر.س</option>
+            <option value="10000-20000">10,000 - 20,000 ر.س</option>
+            <option value="20000+">أكثر من 20,000 ر.س</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Units Grid -->
+<div class="container my-5">
+  <div class="row g-4">
+    <div class="col-md-4" *ngFor="let unit of units$ | async">
+      <div class="card unit-card h-100">
+        <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+          <i class="bi bi-building fs-1 text-muted"></i>
+        </div>
+        <div class="card-body" dir="rtl">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <span class="badge bg-secondary">{{ getUnitTypeLabel(unit.type) }}</span>
+            <span class="badge bg-brand">متاح</span>
+          </div>
+          <h5 class="card-title fw-bold">{{ unit.unitCode }}</h5>
+          <p class="text-muted small" *ngIf="unit.buildingName">
+            <i class="bi bi-building"></i> {{ unit.buildingName }}
+          </p>
+          <p class="text-muted small" *ngIf="unit.areaSqm">
+            <i class="bi bi-arrows-fullscreen"></i> {{ unit.areaSqm }} م²
+          </p>
+          <p class="text-muted small" *ngIf="unit.floor">
+            <i class="bi bi-layers"></i> الطابق {{ unit.floor }}
+          </p>
+
+          <div class="d-flex justify-content-between align-items-center mt-3">
+            <div>
+              <div class="text-brand fw-bold fs-4">{{ unit.rentPrice | number }} ر.س</div>
+              <small class="text-muted">شهرياً</small>
+            </div>
+            <a
+              [routerLink]="['/units', unit.id]"
+              class="btn btn-brand">
+              استفسر الآن
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="(units$ | async)?.length === 0" class="text-center py-5">
+    <i class="bi bi-inbox fs-1 text-muted"></i>
+    <h3 class="mt-3">لا توجد وحدات متاحة حالياً</h3>
+    <p class="text-muted">يرجى المحاولة لاحقاً أو التواصل معنا مباشرة</p>
+  </div>
+</div>
+
+<!-- Footer -->
+<footer class="bg-light mt-5 py-4">
+  <div class="container text-center">
+    <p class="text-muted mb-0">
+      © 2026 Omar Almarbie Real Estate. جميع الحقوق محفوظة.
+    </p>
+  </div>
+</footer>

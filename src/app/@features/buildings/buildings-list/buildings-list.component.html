@@ -1,0 +1,131 @@
+<app-page-header
+  title="إدارة المباني"
+  icon="🏢"
+  [breadcrumbs]="[{label: 'المباني'}]">
+  <div actions>
+    <button
+      *appHasPermission="[Permission.UNITS_WRITE]"
+      class="btn btn-brand"
+      [routerLink]="['new']">
+      <i class="bi bi-plus-lg"></i> إضافة مبنى جديد
+    </button>
+  </div>
+</app-page-header>
+
+<!-- Filters -->
+<div class="card mb-4" dir="rtl">
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label">البحث</label>
+        <input
+          type="text"
+          class="form-control"
+          [(ngModel)]="searchTerm"
+          placeholder="ابحث باسم المبنى، العنوان، أو المالك...">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">الحالة</label>
+        <select class="form-select" [(ngModel)]="statusFilter">
+          <option value="All">الكل</option>
+          <option value="Active">نشط</option>
+          <option value="UnderConstruction">تحت الإنشاء</option>
+          <option value="UnderMaintenance">تحت الصيانة</option>
+          <option value="Inactive">غير نشط</option>
+        </select>
+      </div>
+      <div class="col-md-2 d-flex align-items-end">
+        <button class="btn btn-outline-secondary w-100" (click)="clearFilters()">
+          مسح الفلاتر
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Loading -->
+<div *ngIf="loading$ | async" class="text-center py-5">
+  <div class="spinner-border text-brand" role="status">
+    <span class="visually-hidden">جاري التحميل...</span>
+  </div>
+</div>
+
+<!-- Buildings Table -->
+<div *ngIf="!(loading$ | async)" class="card" dir="rtl">
+  <div class="card-body">
+    <ng-container *ngIf="(filteredBuildings$ | async) as buildings">
+      <div *ngIf="buildings.length === 0">
+        <app-empty-state
+          icon="🏢"
+          title="لا يوجد مباني"
+          message="لم يتم العثور على أي مباني. ابدأ بإضافة مبنى جديد">
+          <button
+            *appHasPermission="[Permission.UNITS_WRITE]"
+            class="btn btn-brand"
+            [routerLink]="['new']">
+            <i class="bi bi-plus-lg"></i> إضافة مبنى جديد
+          </button>
+        </app-empty-state>
+      </div>
+
+      <div *ngIf="buildings.length > 0" class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>اسم المبنى</th>
+              <th>المالك</th>
+              <th>العنوان</th>
+              <th>عدد الطوابق</th>
+              <th>عدد الوحدات</th>
+              <th>الحالة</th>
+              <th>الإجراءات</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let building of buildings">
+              <td>
+                <div class="fw-bold">{{ building.name }}</div>
+              </td>
+              <td>{{ building.ownerName || '-' }}</td>
+              <td>
+                <div>{{ building.address }}</div>
+                <small class="text-muted" *ngIf="building.city">{{ building.city }}</small>
+              </td>
+              <td>{{ building.totalFloors || '-' }}</td>
+              <td>
+                <span class="badge bg-info">{{ building.totalUnits || 0 }}</span>
+              </td>
+              <td>
+                <app-status-badge [status]="building.status"></app-status-badge>
+              </td>
+              <td>
+                <div class="btn-group btn-group-sm" role="group">
+                  <button
+                    class="btn btn-outline-brand"
+                    (click)="manageUnits(building)"
+                    title="إدارة الوحدات">
+                    <i class="bi bi-building"></i>
+                  </button>
+                  <button
+                    *appHasPermission="[Permission.UNITS_WRITE]"
+                    class="btn btn-action-edit"
+                    [routerLink]="['edit', building.id]"
+                    title="تعديل">
+                    <i class="bi bi-pencil-fill"></i>
+                  </button>
+                  <button
+                    *appHasPermission="[Permission.UNITS_WRITE]"
+                    class="btn btn-action-delete"
+                    (click)="deleteBuilding(building)"
+                    title="حذف">
+                    <i class="bi bi-trash-fill"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </ng-container>
+  </div>
+</div>

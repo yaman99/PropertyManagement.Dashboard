@@ -1,0 +1,144 @@
+<app-page-header
+  title="طلب جديد"
+  icon="📋"
+  [breadcrumbs]="[
+    {label: 'الطلبات', url: '/app/requests'},
+    {label: 'جديد'}
+  ]"
+  [showActions]="false">
+</app-page-header>
+
+<div class="card" dir="rtl">
+  <div class="card-body">
+    <form [formGroup]="requestForm" (ngSubmit)="onSubmit()">
+      <!-- Basic Info -->
+      <h5 class="mb-3 text-brand">معلومات الطلب</h5>
+      <div class="row g-3 mb-4">
+        <!-- Title -->
+        <div class="col-md-12">
+          <label class="form-label">عنوان الطلب <span class="text-danger">*</span></label>
+          <input
+            type="text"
+            class="form-control"
+            formControlName="title"
+            [class.is-invalid]="requestForm.get('title')?.invalid && requestForm.get('title')?.touched"
+            placeholder="مثال: مشكلة في التكييف">
+          <div class="invalid-feedback">
+            {{ getErrorMessage('title') }}
+          </div>
+        </div>
+
+        <!-- Category -->
+        <div class="col-md-6">
+          <label class="form-label">التصنيف <span class="text-danger">*</span></label>
+          <select class="form-select" formControlName="category">
+            <option *ngFor="let cat of categories" [value]="cat">
+              {{ getCategoryLabel(cat) }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Priority -->
+        <div class="col-md-6">
+          <label class="form-label">الأولوية <span class="text-danger">*</span></label>
+          <select class="form-select" formControlName="priority">
+            <option *ngFor="let prio of priorities" [value]="prio">
+              {{ getPriorityLabel(prio) }}
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Related Info -->
+      <h5 class="mb-3 text-brand">معلومات مرتبطة</h5>
+      <div class="row g-3 mb-4">
+        <!-- Unit -->
+        <div class="col-md-6">
+          <label class="form-label">الوحدة</label>
+          <select class="form-select" formControlName="unitId">
+            <option value="">اختر الوحدة (اختياري)...</option>
+            <option *ngFor="let unit of units$ | async" [value]="unit.id">
+              {{ unit.unitCode }} - {{ unit.buildingName || 'غير محدد' }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Renter -->
+        <div class="col-md-6">
+          <label class="form-label">المستأجر</label>
+          <select class="form-select" formControlName="renterId">
+            <option value="">اختر المستأجر (اختياري)...</option>
+            <option *ngFor="let renter of renters$ | async" [value]="renter.id">
+              {{ renter.fullName }}
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Description -->
+      <h5 class="mb-3 text-brand">تفاصيل الطلب</h5>
+      <div class="row g-3 mb-4">
+        <div class="col-md-12">
+          <label class="form-label">الوصف التفصيلي <span class="text-danger">*</span></label>
+          <textarea
+            class="form-control"
+            formControlName="description"
+            rows="4"
+            [class.is-invalid]="requestForm.get('description')?.invalid && requestForm.get('description')?.touched"
+            placeholder="اشرح المشكلة بالتفصيل..."></textarea>
+          <div class="invalid-feedback">
+            {{ getErrorMessage('description') }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Photos -->
+      <h5 class="mb-3 text-brand">الصور المرفقة</h5>
+      <div class="row g-3 mb-4">
+        <div class="col-md-12">
+          <div class="upload-area p-4 border border-dashed rounded text-center">
+            <i class="bi bi-cloud-upload fs-1 text-muted"></i>
+            <p class="mb-2">اسحب الصور هنا أو</p>
+            <label class="btn btn-outline-brand">
+              <input
+                type="file"
+                class="d-none"
+                accept="image/*"
+                multiple
+                (change)="onFileSelected($event)">
+              اختر الصور
+            </label>
+          </div>
+
+          <!-- Preview Photos -->
+          <div *ngIf="photos.length > 0" class="row mt-3 g-2">
+            <div *ngFor="let photo of photos; let i = index" class="col-md-3 col-6">
+              <div class="position-relative">
+                <img [src]="photo" class="img-thumbnail w-100" style="height: 120px; object-fit: cover;">
+                <button
+                  type="button"
+                  class="btn btn-danger btn-sm position-absolute top-0 end-0 m-1"
+                  (click)="removePhoto(i)">
+                  <i class="bi bi-x"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <hr class="my-4">
+
+      <!-- Actions -->
+      <div class="d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-secondary" (click)="cancel()" [disabled]="loading">
+          إلغاء
+        </button>
+        <button type="submit" class="btn btn-brand" [disabled]="loading">
+          <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
+          إرسال الطلب
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

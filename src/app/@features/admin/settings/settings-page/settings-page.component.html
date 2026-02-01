@@ -1,0 +1,370 @@
+<app-page-header
+  title="إعدادات النظام"
+  icon="⚙️"
+  [breadcrumbs]="[{label: 'الإعدادات'}]">
+  <div actions>
+    <button class="btn btn-outline-secondary me-2" (click)="resetToDefaults()">
+      <i class="bi bi-arrow-counterclockwise"></i> إعادة تعيين
+    </button>
+    <button class="btn btn-brand" (click)="saveSettings()">
+      <i class="bi bi-check-lg"></i> حفظ الإعدادات
+    </button>
+  </div>
+</app-page-header>
+
+<div class="row" dir="rtl">
+  <!-- Sidebar Tabs -->
+  <div class="col-md-3 mb-4">
+    <div class="card">
+      <div class="list-group list-group-flush">
+        <button
+          class="list-group-item list-group-item-action d-flex align-items-center"
+          [class.active]="activeTab === 'company'"
+          (click)="setTab('company')">
+          <span class="me-2">🏢</span> معلومات الشركة
+        </button>
+        <button
+          class="list-group-item list-group-item-action d-flex align-items-center"
+          [class.active]="activeTab === 'financial'"
+          (click)="setTab('financial')">
+          <span class="me-2">💰</span> الإعدادات المالية
+        </button>
+        <button
+          class="list-group-item list-group-item-action d-flex align-items-center"
+          [class.active]="activeTab === 'lease'"
+          (click)="setTab('lease')">
+          <span class="me-2">📄</span> إعدادات العقود
+        </button>
+        <button
+          class="list-group-item list-group-item-action d-flex align-items-center"
+          [class.active]="activeTab === 'notifications'"
+          (click)="setTab('notifications')">
+          <span class="me-2">🔔</span> الإشعارات
+        </button>
+        <button
+          class="list-group-item list-group-item-action d-flex align-items-center"
+          [class.active]="activeTab === 'system'"
+          (click)="setTab('system')">
+          <span class="me-2">⚙️</span> إعدادات النظام
+        </button>
+        <button
+          class="list-group-item list-group-item-action d-flex align-items-center"
+          [class.active]="activeTab === 'backup'"
+          (click)="setTab('backup')">
+          <span class="me-2">💾</span> النسخ الاحتياطي
+        </button>
+        <button
+          class="list-group-item list-group-item-action d-flex align-items-center text-danger"
+          [class.active]="activeTab === 'data'"
+          (click)="setTab('data')">
+          <span class="me-2">🗑️</span> إدارة البيانات
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="col-md-9">
+    <!-- Data Management Tab -->
+    <div *ngIf="activeTab === 'data'" class="card border-danger">
+      <div class="card-header bg-danger text-white">
+        <h5 class="mb-0">🗑️ إدارة البيانات</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <h6 class="mb-3">إحصائيات البيانات الحالية:</h6>
+            <ul class="list-group mb-3">
+              <li class="list-group-item d-flex justify-content-between" *ngFor="let stat of dataStats | keyvalue">
+                <span>{{ stat.key }}</span>
+                <span class="badge bg-primary rounded-pill">{{ stat.value }}</span>
+              </li>
+            </ul>
+            <button class="btn btn-outline-secondary btn-sm" (click)="refreshDataStats()">
+              <i class="bi bi-arrow-clockwise"></i> تحديث
+            </button>
+          </div>
+          <div class="col-md-6">
+            <div class="alert alert-warning">
+              <i class="bi bi-exclamation-triangle me-2"></i>
+              <strong>تحذير:</strong> مسح البيانات سيحذف جميع الملاك والوحدات والمستأجرين والعقود والحسابات نهائياً.
+            </div>
+            <p class="text-muted mb-3">استخدم هذا الخيار لبدء نسخة تجريبية نظيفة للعميل.</p>
+            <button class="btn btn-danger btn-lg w-100" (click)="clearAllData()">
+              <i class="bi bi-trash3 me-2"></i>
+              مسح جميع البيانات
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Company Info -->
+    <div *ngIf="activeTab === 'company'" class="card">
+      <div class="card-header bg-white">
+        <h5 class="mb-0">🏢 معلومات الشركة</h5>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <!-- Logo -->
+          <div class="col-12 mb-3">
+            <label class="form-label">شعار الشركة</label>
+            <div class="d-flex align-items-center gap-3">
+              <div *ngIf="settings.logo" class="logo-preview">
+                <img [src]="settings.logo" alt="Logo" class="img-thumbnail" style="max-height: 80px;">
+              </div>
+              <div *ngIf="!settings.logo" class="logo-placeholder">
+                <i class="bi bi-building fs-1 text-muted"></i>
+              </div>
+              <div>
+                <label class="btn btn-outline-brand btn-sm">
+                  <input type="file" class="d-none" accept="image/*" (change)="onLogoSelected($event)">
+                  <i class="bi bi-upload"></i> رفع شعار
+                </label>
+                <button *ngIf="settings.logo" class="btn btn-outline-danger btn-sm ms-2" (click)="removeLogo()">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">اسم الشركة (عربي)</label>
+            <input type="text" class="form-control" [(ngModel)]="settings.companyName">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">اسم الشركة (إنجليزي)</label>
+            <input type="text" class="form-control" [(ngModel)]="settings.companyNameEn" dir="ltr">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">السجل التجاري</label>
+            <input type="text" class="form-control" [(ngModel)]="settings.commercialRegister">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">الرقم الضريبي</label>
+            <input type="text" class="form-control" [(ngModel)]="settings.taxNumber">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">رقم الهاتف</label>
+            <input type="text" class="form-control" [(ngModel)]="settings.phone" dir="ltr">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">البريد الإلكتروني</label>
+            <input type="email" class="form-control" [(ngModel)]="settings.email" dir="ltr">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">الموقع الإلكتروني</label>
+            <input type="text" class="form-control" [(ngModel)]="settings.website" dir="ltr">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">العنوان</label>
+            <input type="text" class="form-control" [(ngModel)]="settings.address">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Financial Settings -->
+    <div *ngIf="activeTab === 'financial'" class="card">
+      <div class="card-header bg-white">
+        <h5 class="mb-0">💰 الإعدادات المالية</h5>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">العملة</label>
+            <select class="form-select" [(ngModel)]="settings.currency">
+              <option value="SAR">ريال سعودي (SAR)</option>
+              <option value="AED">درهم إماراتي (AED)</option>
+              <option value="KWD">دينار كويتي (KWD)</option>
+              <option value="QAR">ريال قطري (QAR)</option>
+              <option value="BHD">دينار بحريني (BHD)</option>
+              <option value="OMR">ريال عماني (OMR)</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">بداية السنة المالية</label>
+            <select class="form-select" [(ngModel)]="settings.fiscalYearStart">
+              <option value="01-01">يناير (01-01)</option>
+              <option value="04-01">أبريل (04-01)</option>
+              <option value="07-01">يوليو (07-01)</option>
+              <option value="10-01">أكتوبر (10-01)</option>
+            </select>
+          </div>
+          <div class="col-md-12">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="enableVat" [(ngModel)]="settings.enableVat">
+              <label class="form-check-label" for="enableVat">تفعيل ضريبة القيمة المضافة</label>
+            </div>
+          </div>
+          <div class="col-md-6" *ngIf="settings.enableVat">
+            <label class="form-label">نسبة ضريبة القيمة المضافة (%)</label>
+            <input type="number" class="form-control" [(ngModel)]="settings.vatRate" min="0" max="100">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lease Settings -->
+    <div *ngIf="activeTab === 'lease'" class="card">
+      <div class="card-header bg-white">
+        <h5 class="mb-0">📄 إعدادات العقود</h5>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">دورة الدفع الافتراضية</label>
+            <select class="form-select" [(ngModel)]="settings.defaultPaymentCycle">
+              <option value="Monthly">شهري</option>
+              <option value="Quarterly">ربع سنوي</option>
+              <option value="Yearly">سنوي</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">يوم الاستحقاق الافتراضي</label>
+            <input type="number" class="form-control" [(ngModel)]="settings.defaultDueDayOfMonth" min="1" max="28">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">فترة السماح (أيام)</label>
+            <input type="number" class="form-control" [(ngModel)]="settings.gracePeriodDays" min="0">
+          </div>
+          <div class="col-md-12">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="enableLateFees" [(ngModel)]="settings.enableLateFees">
+              <label class="form-check-label" for="enableLateFees">تفعيل غرامات التأخير</label>
+            </div>
+          </div>
+          <div class="col-md-6" *ngIf="settings.enableLateFees">
+            <label class="form-label">نسبة غرامة التأخير (%)</label>
+            <input type="number" class="form-control" [(ngModel)]="settings.lateFeePercentage" min="0" max="100">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notification Settings -->
+    <div *ngIf="activeTab === 'notifications'" class="card">
+      <div class="card-header bg-white">
+        <h5 class="mb-0">🔔 إعدادات الإشعارات</h5>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-12">
+            <div class="form-check form-switch mb-3">
+              <input class="form-check-input" type="checkbox" id="enableEmail" [(ngModel)]="settings.enableEmailNotifications">
+              <label class="form-check-label" for="enableEmail">تفعيل إشعارات البريد الإلكتروني</label>
+            </div>
+            <div class="form-check form-switch mb-3">
+              <input class="form-check-input" type="checkbox" id="enableSms" [(ngModel)]="settings.enableSmsNotifications">
+              <label class="form-check-label" for="enableSms">تفعيل إشعارات الرسائل النصية</label>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">تذكير الدفع قبل (أيام)</label>
+            <input type="number" class="form-control" [(ngModel)]="settings.paymentReminderDays" min="0">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">تذكير انتهاء العقد قبل (أيام)</label>
+            <input type="number" class="form-control" [(ngModel)]="settings.leaseExpiryReminderDays" min="0">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- System Settings -->
+    <div *ngIf="activeTab === 'system'" class="card">
+      <div class="card-header bg-white">
+        <h5 class="mb-0">⚙️ إعدادات النظام</h5>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">اللغة الافتراضية</label>
+            <select class="form-select" [(ngModel)]="settings.language">
+              <option value="ar">العربية</option>
+              <option value="en">English</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">تنسيق التاريخ</label>
+            <select class="form-select" [(ngModel)]="settings.dateFormat">
+              <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+              <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+              <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">المنطقة الزمنية</label>
+            <select class="form-select" [(ngModel)]="settings.timezone">
+              <option value="Asia/Riyadh">الرياض (GMT+3)</option>
+              <option value="Asia/Dubai">دبي (GMT+4)</option>
+              <option value="Asia/Kuwait">الكويت (GMT+3)</option>
+              <option value="Asia/Qatar">قطر (GMT+3)</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">مهلة انتهاء الجلسة (دقائق)</label>
+            <input type="number" class="form-control" [(ngModel)]="settings.sessionTimeoutMinutes" min="5">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Backup Settings -->
+    <div *ngIf="activeTab === 'backup'" class="card">
+      <div class="card-header bg-white">
+        <h5 class="mb-0">💾 النسخ الاحتياطي</h5>
+      </div>
+      <div class="card-body">
+        <div class="row g-4">
+          <div class="col-md-6">
+            <div class="card bg-light h-100">
+              <div class="card-body text-center">
+                <div class="fs-1 mb-3">📤</div>
+                <h5>تصدير الإعدادات</h5>
+                <p class="text-muted small">تصدير جميع إعدادات النظام لملف JSON</p>
+                <button class="btn btn-brand" (click)="exportSettings()">
+                  <i class="bi bi-download"></i> تصدير
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card bg-light h-100">
+              <div class="card-body text-center">
+                <div class="fs-1 mb-3">📥</div>
+                <h5>استيراد الإعدادات</h5>
+                <p class="text-muted small">استيراد إعدادات من ملف JSON</p>
+                <label class="btn btn-outline-brand">
+                  <input type="file" class="d-none" accept=".json" (change)="importSettings($event)">
+                  <i class="bi bi-upload"></i> استيراد
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <hr class="my-4">
+
+        <div class="alert alert-info">
+          <i class="bi bi-info-circle me-2"></i>
+          <strong>ملاحظة:</strong> هذا التطبيق تجريبي (Demo) ويستخدم LocalStorage لتخزين البيانات.
+          في بيئة الإنتاج، يتم استخدام قاعدة بيانات مع نظام نسخ احتياطي آلي.
+        </div>
+
+        <div class="d-flex gap-2">
+          <button class="btn btn-outline-danger" (click)="resetToDefaults()">
+            <i class="bi bi-arrow-counterclockwise"></i> إعادة تعيين الإعدادات
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Save Button -->
+    <div class="d-flex justify-content-end mt-4">
+      <button class="btn btn-brand btn-lg" (click)="saveSettings()">
+        <i class="bi bi-check-lg"></i> حفظ جميع الإعدادات
+      </button>
+    </div>
+  </div>
+</div>

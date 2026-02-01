@@ -1,0 +1,35 @@
+.timeline {
+  position: relative;
+  padding: 0;
+
+  .timeline-item {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    align-items: flex-start;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    .timeline-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      flex-shrink: 0;
+
+      i {
+        font-size: 1.2rem;
+      }
+    }
+
+    .timeline-content {
+      flex: 1;
+      text-align: right;
+    }
+  }
+}

@@ -1,0 +1,153 @@
+<app-page-header
+  title="الطلبات والشكاوى"
+  icon="📋"
+  [breadcrumbs]="[{label: 'الطلبات'}]">
+  <div actions>
+    <button
+      *appHasPermission="[Permission.REQUESTS_WRITE]"
+      class="btn btn-brand"
+      [routerLink]="['new']">
+      <i class="bi bi-plus-lg"></i> طلب جديد
+    </button>
+  </div>
+</app-page-header>
+
+<!-- Filters -->
+<div class="card mb-4" dir="rtl">
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-md-3">
+        <label class="form-label">البحث</label>
+        <input
+          type="text"
+          class="form-control"
+          [(ngModel)]="searchTerm"
+          (ngModelChange)="applyFilters()"
+          placeholder="ابحث بالعنوان أو الوحدة...">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">الحالة</label>
+        <select class="form-select" [(ngModel)]="statusFilter" (ngModelChange)="applyFilters()">
+          <option value="All">الكل</option>
+          <option [value]="RequestStatus.New">جديد</option>
+          <option [value]="RequestStatus.InProgress">قيد التنفيذ</option>
+          <option [value]="RequestStatus.OnHold">معلق</option>
+          <option [value]="RequestStatus.Resolved">تم الحل</option>
+          <option [value]="RequestStatus.Closed">مغلق</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">التصنيف</label>
+        <select class="form-select" [(ngModel)]="categoryFilter" (ngModelChange)="applyFilters()">
+          <option value="All">الكل</option>
+          <option [value]="RequestCategory.Maintenance">صيانة عامة</option>
+          <option [value]="RequestCategory.Plumbing">سباكة</option>
+          <option [value]="RequestCategory.Electrical">كهرباء</option>
+          <option [value]="RequestCategory.HVAC">تكييف</option>
+          <option [value]="RequestCategory.Cleaning">نظافة</option>
+          <option [value]="RequestCategory.Security">أمن</option>
+          <option [value]="RequestCategory.Other">أخرى</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">الأولوية</label>
+        <select class="form-select" [(ngModel)]="priorityFilter" (ngModelChange)="applyFilters()">
+          <option value="All">الكل</option>
+          <option [value]="RequestPriority.Low">منخفضة</option>
+          <option [value]="RequestPriority.Medium">متوسطة</option>
+          <option [value]="RequestPriority.High">عالية</option>
+          <option [value]="RequestPriority.Urgent">عاجلة</option>
+        </select>
+      </div>
+      <div class="col-md-3 d-flex align-items-end">
+        <button class="btn btn-outline-secondary w-100" (click)="clearFilters()">
+          مسح الفلاتر
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Loading -->
+<div *ngIf="loading" class="text-center py-5">
+  <div class="spinner-border text-brand" role="status">
+    <span class="visually-hidden">جاري التحميل...</span>
+  </div>
+</div>
+
+<!-- Requests List -->
+<div *ngIf="!loading" class="card" dir="rtl">
+  <div class="card-body">
+    <div *ngIf="filteredRequests.length === 0">
+      <app-empty-state
+        icon="📋"
+        title="لا توجد طلبات"
+        message="لم يتم العثور على أي طلبات. ابدأ بإضافة طلب جديد">
+        <button
+          *appHasPermission="[Permission.REQUESTS_WRITE]"
+          class="btn btn-brand"
+          [routerLink]="['new']">
+          <i class="bi bi-plus-lg"></i> طلب جديد
+        </button>
+      </app-empty-state>
+    </div>
+
+    <div *ngIf="filteredRequests.length > 0" class="table-responsive">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>العنوان</th>
+            <th>التصنيف</th>
+            <th>الوحدة</th>
+            <th>المستأجر</th>
+            <th>الأولوية</th>
+            <th>الحالة</th>
+            <th>التاريخ</th>
+            <th>الإجراءات</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let request of filteredRequests">
+            <td>
+              <div class="fw-bold">{{ request.title }}</div>
+              <small class="text-muted text-truncate d-block" style="max-width: 200px;">
+                {{ request.description }}
+              </small>
+            </td>
+            <td>
+              <span class="badge bg-secondary">{{ getCategoryLabel(request.category) }}</span>
+            </td>
+            <td>{{ request.unitCode }}</td>
+            <td>{{ request.renterName }}</td>
+            <td>
+              <span class="badge" [ngClass]="getPriorityClass(request.priority)">
+                {{ getPriorityLabel(request.priority) }}
+              </span>
+            </td>
+            <td>
+              <app-status-badge [status]="request.status"></app-status-badge>
+            </td>
+            <td>{{ formatDate(request.createdAt) }}</td>
+            <td>
+              <div class="btn-group btn-group-sm" role="group">
+                <button
+                  class="btn btn-action-view"
+                  [routerLink]="[request.id]"
+                  title="عرض التفاصيل">
+                  <i class="bi bi-eye-fill"></i>
+                </button>
+                <button
+                  *appHasPermission="[Permission.REQUESTS_WRITE]"
+                  class="btn btn-action-delete"
+                  (click)="deleteRequest(request)"
+                  title="حذف">
+                  <i class="bi bi-trash-fill"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

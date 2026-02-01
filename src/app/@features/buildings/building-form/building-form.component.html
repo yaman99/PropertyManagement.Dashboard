@@ -1,0 +1,98 @@
+<app-page-header
+  [title]="isEditMode ? 'تعديل المبنى' : 'إضافة مبنى جديد'"
+  icon="🏢"
+  [breadcrumbs]="[
+    {label: 'المباني', url: '/app/buildings'},
+    {label: isEditMode ? 'تعديل' : 'إضافة جديد'}
+  ]">
+</app-page-header>
+
+<div class="card" dir="rtl">
+  <div class="card-body">
+    <form [formGroup]="buildingForm" (ngSubmit)="onSubmit()">
+      <div class="row g-4">
+        <!-- Owner Selection -->
+        <div class="col-md-6">
+          <label class="form-label">المالك <span class="text-danger">*</span></label>
+          <select class="form-select" formControlName="ownerId"
+            [ngClass]="{'is-invalid': buildingForm.get('ownerId')?.touched && buildingForm.get('ownerId')?.invalid}">
+            <option value="">اختر المالك</option>
+            <option *ngFor="let owner of (owners$ | async)" [value]="owner.id">
+              {{ owner.fullName }}
+            </option>
+          </select>
+          <div class="invalid-feedback">يرجى اختيار المالك</div>
+          <small class="text-muted">جميع الوحدات في هذا المبنى ستكون تابعة لهذا المالك</small>
+        </div>
+
+        <!-- Building Name -->
+        <div class="col-md-6">
+          <label class="form-label">اسم المبنى <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" formControlName="name"
+            placeholder="مثال: برج السلام"
+            [ngClass]="{'is-invalid': buildingForm.get('name')?.touched && buildingForm.get('name')?.invalid}">
+          <div class="invalid-feedback">اسم المبنى مطلوب (3 أحرف على الأقل)</div>
+        </div>
+
+        <!-- Address -->
+        <div class="col-md-12">
+          <label class="form-label">العنوان <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" formControlName="address"
+            placeholder="العنوان التفصيلي للمبنى"
+            [ngClass]="{'is-invalid': buildingForm.get('address')?.touched && buildingForm.get('address')?.invalid}">
+          <div class="invalid-feedback">العنوان مطلوب</div>
+        </div>
+
+        <!-- City -->
+        <div class="col-md-6">
+          <label class="form-label">المدينة</label>
+          <input type="text" class="form-control" formControlName="city"
+            placeholder="مثال: الرياض">
+        </div>
+
+        <!-- District -->
+        <div class="col-md-6">
+          <label class="form-label">الحي</label>
+          <input type="text" class="form-control" formControlName="district"
+            placeholder="مثال: حي النخيل">
+        </div>
+
+        <!-- Total Floors -->
+        <div class="col-md-4">
+          <label class="form-label">عدد الطوابق</label>
+          <input type="number" class="form-control" formControlName="totalFloors"
+            min="1" max="100" placeholder="مثال: 10">
+        </div>
+
+        <!-- Year Built -->
+        <div class="col-md-4">
+          <label class="form-label">سنة البناء</label>
+          <input type="number" class="form-control" formControlName="yearBuilt"
+            min="1900" [max]="2026" placeholder="مثال: 2020">
+        </div>
+
+        <!-- Status (only in edit mode) -->
+        <div class="col-md-4" *ngIf="isEditMode">
+          <label class="form-label">الحالة</label>
+          <select class="form-select" formControlName="status">
+            <option *ngFor="let status of buildingStatuses" [value]="status">
+              {{ getStatusLabel(status) }}
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="mt-4 d-flex gap-2">
+        <button type="submit" class="btn btn-brand" [disabled]="loading">
+          <span *ngIf="loading" class="spinner-border spinner-border-sm me-1"></span>
+          <i *ngIf="!loading" class="bi bi-check-lg me-1"></i>
+          {{ isEditMode ? 'حفظ التعديلات' : 'إضافة المبنى' }}
+        </button>
+        <button type="button" class="btn btn-secondary" (click)="cancel()">
+          إلغاء
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

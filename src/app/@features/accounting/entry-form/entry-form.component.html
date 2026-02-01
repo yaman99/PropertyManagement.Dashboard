@@ -1,0 +1,109 @@
+<app-page-header
+  title="قيد جديد"
+  icon="📝"
+  [breadcrumbs]="[
+    {label: 'الحسابات', url: '/app/accounting'},
+    {label: 'القيود', url: '/app/accounting/entries'},
+    {label: 'جديد'}
+  ]"
+  [showActions]="false">
+</app-page-header>
+
+<div class="card" dir="rtl">
+  <div class="card-body">
+    <form [formGroup]="entryForm" (ngSubmit)="onSubmit()">
+      <div class="row g-3 mb-4">
+        <!-- Date -->
+        <div class="col-md-6">
+          <label class="form-label">التاريخ <span class="text-danger">*</span></label>
+          <input
+            type="date"
+            class="form-control"
+            formControlName="date"
+            [class.is-invalid]="entryForm.get('date')?.invalid && entryForm.get('date')?.touched">
+          <div class="invalid-feedback">
+            {{ getErrorMessage('date') }}
+          </div>
+        </div>
+
+        <!-- Account -->
+        <div class="col-md-6">
+          <label class="form-label">الحساب <span class="text-danger">*</span></label>
+          <select
+            class="form-select"
+            formControlName="accountId"
+            [class.is-invalid]="entryForm.get('accountId')?.invalid && entryForm.get('accountId')?.touched">
+            <option value="">اختر الحساب...</option>
+            <option *ngFor="let account of accounts" [value]="account.id">
+              {{ account.name }}
+            </option>
+          </select>
+          <div class="invalid-feedback">
+            {{ getErrorMessage('accountId') }}
+          </div>
+        </div>
+
+        <!-- Type -->
+        <div class="col-md-6">
+          <label class="form-label">نوع القيد <span class="text-danger">*</span></label>
+          <div class="btn-group w-100" role="group">
+            <input type="radio" class="btn-check" formControlName="type" value="debit" id="typeDebit">
+            <label class="btn btn-outline-success" for="typeDebit">
+              <i class="bi bi-plus-circle"></i> مدين
+            </label>
+
+            <input type="radio" class="btn-check" formControlName="type" value="credit" id="typeCredit">
+            <label class="btn btn-outline-danger" for="typeCredit">
+              <i class="bi bi-dash-circle"></i> دائن
+            </label>
+          </div>
+        </div>
+
+        <!-- Amount -->
+        <div class="col-md-6">
+          <label class="form-label">المبلغ <span class="text-danger">*</span></label>
+          <div class="input-group">
+            <input
+              type="number"
+              class="form-control"
+              formControlName="amount"
+              step="0.01"
+              [class.is-invalid]="entryForm.get('amount')?.invalid && entryForm.get('amount')?.touched"
+              placeholder="0.00">
+            <span class="input-group-text">ر.س</span>
+          </div>
+          <div class="invalid-feedback d-block" *ngIf="entryForm.get('amount')?.invalid && entryForm.get('amount')?.touched">
+            {{ getErrorMessage('amount') }}
+          </div>
+        </div>
+
+        <!-- Note -->
+        <div class="col-md-12">
+          <label class="form-label">البيان <span class="text-danger">*</span></label>
+          <textarea
+            class="form-control"
+            formControlName="note"
+            rows="3"
+            [class.is-invalid]="entryForm.get('note')?.invalid && entryForm.get('note')?.touched"
+            placeholder="وصف القيد المحاسبي..."></textarea>
+          <div class="invalid-feedback">
+            {{ getErrorMessage('note') }}
+          </div>
+        </div>
+      </div>
+
+      <hr class="my-4">
+
+      <!-- Actions -->
+      <div class="d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-secondary" (click)="cancel()" [disabled]="loading">
+          إلغاء
+        </button>
+        <button type="submit" class="btn btn-brand" [disabled]="loading">
+          <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
+          حفظ القيد
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

@@ -1,0 +1,362 @@
+<app-page-header
+  title="تفاصيل العقد"
+  icon="📄"
+  [breadcrumbs]="[
+    {label: 'العقود', url: '/app/leases'},
+    {label: 'تفاصيل'}
+  ]">
+  <div actions>
+    <button
+      *appHasPermission="[Permission.LEASES_WRITE]"
+      class="btn btn-danger"
+      (click)="cancelLease()"
+      [disabled]="lease?.status !== LeaseStatus.Active">
+      <i class="bi bi-x-circle"></i> إلغاء العقد
+    </button>
+  </div>
+</app-page-header>
+
+<div *ngIf="lease" dir="rtl">
+  <!-- Status Banner -->
+  <div class="alert"
+       [ngClass]="{
+         'alert-success': lease.status === LeaseStatus.Active,
+         'alert-warning': lease.status === LeaseStatus.Draft,
+         'alert-secondary': lease.status === LeaseStatus.Expired,
+         'alert-danger': lease.status === LeaseStatus.Cancelled
+       }">
+    <div class="d-flex justify-content-between align-items-center">
+      <div>
+        <strong>حالة العقد:</strong>
+        <app-status-badge [status]="lease.status" class="me-2"></app-status-badge>
+      </div>
+      <div *ngIf="getPaymentProgress() as progress">
+        <strong>نسبة التحصيل:</strong>
+        {{ progress.percentage }}% ({{ progress.paid }}/{{ progress.total }} دفعات)
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Left Column: Contract Info -->
+    <div class="col-md-8">
+      <!-- Contract Details -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">📋 تفاصيل العقد</h5>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <div class="info-item">
+                <label>تاريخ البداية</label>
+                <p>{{ formatDate(lease.startDate) }}</p>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="info-item">
+                <label>تاريخ النهاية</label>
+                <p>{{ formatDate(lease.endDate) }}</p>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="info-item">
+                <label>دورة الدفع</label>
+                <p>{{ getPaymentCycleLabel(lease.paymentCycle) }}</p>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="info-item">
+                <label>قيمة الإيجار</label>
+                <p class="text-brand fw-bold">{{ lease.rentAmount | number }} ر.س</p>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="info-item">
+                <label>مبلغ التأمين</label>
+                <p>{{ lease.depositAmount ? (lease.depositAmount | number) + ' ر.س' : 'لا يوجد' }}</p>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="info-item">
+                <label>يوم الاستحقاق</label>
+                <p>{{ lease.dueDayOfMonth || 1 }} من كل شهر</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Payment Schedule -->
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">💰 جدول الدفعات</h5>
+          <span class="badge bg-brand" *ngIf="getPaymentProgress() as progress">
+            {{ progress.paidAmount | number }} / {{ progress.totalAmount | number }} ر.س
+          </span>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>تاريخ الاستحقاق</th>
+                  <th>المبلغ</th>
+                  <th>الحالة</th>
+                  <th>تاريخ الدفع</th>
+                  <th>الإجراءات</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let payment of lease.paymentSchedule; let i = index"
+                    [class.table-success]="payment.status === PaymentStatus.Paid"
+                    [class.table-danger]="payment.status === PaymentStatus.Overdue">
+                  <td>{{ i + 1 }}</td>
+                  <td>{{ formatDate(payment.dueDate) }}</td>
+                  <td>{{ payment.amount | number }} ر.س</td>
+                  <td>
+                    <span class="badge" [ngClass]="getPaymentStatusClass(payment.status)">
+                      {{ getPaymentStatusLabel(payment.status) }}
+                    </span>
+                  </td>
+                  <td>{{ payment.paidDate ? formatDate(payment.paidDate) : '-' }}</td>
+                  <td>
+                    <button
+                      *appHasPermission="[Permission.LEASES_WRITE]"
+                      class="btn btn-sm btn-success"
+                      (click)="openPaymentModal(payment, i)"
+                      [disabled]="payment.status === PaymentStatus.Paid || lease.status !== LeaseStatus.Active"
+                      title="تسجيل دفعة">
+                      <i class="bi bi-cash-coin"></i> تسجيل دفعة
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Parties Info -->
+    <div class="col-md-4">
+      <!-- Unit Info -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">🏢 الوحدة</h5>
+        </div>
+        <div class="card-body">
+          <div class="info-item">
+            <label>كود الوحدة</label>
+            <p class="fw-bold">{{ unit?.unitCode }}</p>
+          </div>
+          <div class="info-item" *ngIf="unit?.buildingName">
+            <label>المبنى</label>
+            <p>{{ unit?.buildingName }}</p>
+          </div>
+          <div class="info-item" *ngIf="unit?.areaSqm">
+            <label>المساحة</label>
+            <p>{{ unit?.areaSqm }} م²</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Renter Info -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">👤 المستأجر</h5>
+        </div>
+        <div class="card-body">
+          <div class="info-item">
+            <label>الاسم</label>
+            <p class="fw-bold">{{ renter?.fullName }}</p>
+          </div>
+          <div class="info-item">
+            <label>الجوال</label>
+            <p>
+              <a [href]="'tel:' + renter?.phone">{{ renter?.phone }}</a>
+            </p>
+          </div>
+          <div class="info-item" *ngIf="renter?.email">
+            <label>البريد</label>
+            <p>
+              <a [href]="'mailto:' + renter?.email">{{ renter?.email }}</a>
+            </p>
+          </div>
+          <div class="info-item" *ngIf="renter?.nationalId">
+            <label>رقم الهوية</label>
+            <p>{{ renter?.nationalId }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Owner Info -->
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">🏠 المالك</h5>
+        </div>
+        <div class="card-body">
+          <div class="info-item">
+            <label>الاسم</label>
+            <p class="fw-bold">{{ owner?.fullName }}</p>
+          </div>
+          <div class="info-item">
+            <label>الجوال</label>
+            <p>
+              <a [href]="'tel:' + owner?.phone">{{ owner?.phone }}</a>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Back Button -->
+  <div class="mt-4">
+    <button class="btn btn-secondary" (click)="goBack()">
+      <i class="bi bi-arrow-right me-1"></i>
+      العودة للقائمة
+    </button>
+  </div>
+</div>
+
+<!-- Payment Modal -->
+<div class="modal fade" [class.show]="showPaymentModal" [style.display]="showPaymentModal ? 'block' : 'none'" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered" dir="rtl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bi bi-cash-coin text-success me-2"></i>
+          تسجيل دفعة إيجار
+        </h5>
+        <button type="button" class="btn-close" (click)="closePaymentModal()"></button>
+      </div>
+      <div class="modal-body" *ngIf="selectedPayment">
+        <!-- Payment Info -->
+        <div class="alert alert-info mb-3">
+          <div class="row">
+            <div class="col-6">
+              <strong>تاريخ الاستحقاق:</strong><br>
+              {{ formatDate(selectedPayment.dueDate) }}
+            </div>
+            <div class="col-6">
+              <strong>المبلغ المستحق:</strong><br>
+              <span class="text-brand fw-bold">{{ selectedPayment.amount | number }} ر.س</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Renter Info -->
+        <div class="mb-3 p-3 bg-light rounded">
+          <div class="d-flex align-items-center">
+            <i class="bi bi-person-fill text-brand fs-4 me-2"></i>
+            <div>
+              <div class="fw-bold">{{ renter?.fullName }}</div>
+              <small class="text-muted">{{ unit?.unitCode }} - {{ unit?.buildingName }}</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Payment Amount -->
+        <div class="mb-3">
+          <label class="form-label">المبلغ المدفوع <span class="text-danger">*</span></label>
+          <div class="input-group">
+            <input
+              type="number"
+              class="form-control form-control-lg text-center fw-bold"
+              [(ngModel)]="paymentAmount"
+              [min]="0">
+            <span class="input-group-text">ر.س</span>
+          </div>
+          <small class="text-muted" *ngIf="paymentAmount < selectedPayment.amount">
+            <i class="bi bi-exclamation-triangle text-warning"></i>
+            المبلغ أقل من المستحق
+          </small>
+        </div>
+
+        <!-- Payment Method -->
+        <div class="mb-3">
+          <label class="form-label">طريقة الدفع</label>
+          <select class="form-select" [(ngModel)]="paymentMethod">
+            <option value="cash">نقدي</option>
+            <option value="bank_transfer">تحويل بنكي</option>
+            <option value="check">شيك</option>
+          </select>
+        </div>
+
+        <!-- Admin Fee Percentage -->
+        <div class="mb-3">
+          <label class="form-label">نسبة رسوم الإدارة</label>
+          <div class="input-group">
+            <input
+              type="number"
+              class="form-control"
+              [(ngModel)]="adminFeePercentage"
+              [min]="0"
+              [max]="100">
+            <span class="input-group-text">%</span>
+          </div>
+        </div>
+
+        <!-- Notes -->
+        <div class="mb-3">
+          <label class="form-label">ملاحظات</label>
+          <textarea
+            class="form-control"
+            rows="2"
+            [(ngModel)]="paymentNote"
+            placeholder="أي ملاحظات إضافية..."></textarea>
+        </div>
+
+        <!-- Fee Breakdown Summary -->
+        <div class="alert alert-warning mb-3">
+          <h6 class="alert-heading mb-2">
+            <i class="bi bi-calculator me-2"></i>
+            تفصيل المبالغ
+          </h6>
+          <div class="row">
+            <div class="col-6">
+              <small class="text-muted">المبلغ المستلم:</small>
+              <div class="fw-bold">{{ paymentAmount | number }} ر.س</div>
+            </div>
+            <div class="col-6 text-start">
+              <small class="text-muted">رسوم الإدارة ({{ adminFeePercentage }}%):</small>
+              <div class="fw-bold text-danger">- {{ adminFeeAmount | number }} ر.س</div>
+            </div>
+          </div>
+          <hr class="my-2">
+          <div class="d-flex justify-content-between align-items-center">
+            <span>صافي مستحقات المالك <strong>{{ owner?.fullName }}</strong>:</span>
+            <span class="badge bg-success fs-6">{{ ownerNetAmount | number }} ر.س</span>
+          </div>
+        </div>
+
+        <!-- Destination Info -->
+        <div class="alert alert-info mb-0">
+          <div class="d-flex justify-content-between align-items-center">
+            <span>سيتم تسجيل المبلغ في:</span>
+            <span class="badge bg-info fs-6">
+              {{ paymentMethod === 'bank_transfer' ? 'البنك' : 'الصندوق النقدي' }}
+            </span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closePaymentModal()">
+          <i class="bi bi-x-lg me-1"></i> إلغاء
+        </button>
+        <button
+          type="button"
+          class="btn btn-success"
+          (click)="confirmPayment()"
+          [disabled]="paymentAmount <= 0 || isProcessingPayment">
+          <span *ngIf="isProcessingPayment" class="spinner-border spinner-border-sm me-1"></span>
+          <i *ngIf="!isProcessingPayment" class="bi bi-check-lg me-1"></i>
+          تأكيد الدفعة
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade" [class.show]="showPaymentModal" *ngIf="showPaymentModal"></div>

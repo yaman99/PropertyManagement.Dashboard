@@ -1,0 +1,21 @@
+.form-check-input:checked {
+  background-color: var(--brand-color);
+  border-color: var(--brand-color);
+}
+
+.form-switch .form-check-input:checked {
+  background-color: var(--brand-color);
+  border-color: var(--brand-color);
+}
+
+.btn-brand {
+  background-color: var(--brand-color);
+  border-color: var(--brand-color);
+  color: white;
+
+  &:hover {
+    background-color: #a67339;
+    border-color: #a67339;
+    color: white;
+  }
+}

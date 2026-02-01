@@ -1,0 +1,132 @@
+<app-page-header
+  [title]="isEditMode ? 'تعديل مالك' : 'إضافة مالك جديد'"
+  icon="👤"
+  [breadcrumbs]="[
+    {label: 'الملاك', url: '/app/owners'},
+    {label: isEditMode ? 'تعديل' : 'جديد'}
+  ]"
+  [showActions]="false">
+</app-page-header>
+
+<div class="card" dir="rtl">
+  <div class="card-body">
+    <form [formGroup]="ownerForm" (ngSubmit)="onSubmit()">
+      <div class="row g-3">
+        <!-- Full Name -->
+        <div class="col-md-6">
+          <label class="form-label">الاسم الكامل <span class="text-danger">*</span></label>
+          <input
+            type="text"
+            class="form-control"
+            formControlName="fullName"
+            [class.is-invalid]="ownerForm.get('fullName')?.invalid && ownerForm.get('fullName')?.touched"
+            placeholder="أدخل الاسم الكامل">
+          <div class="invalid-feedback">
+            {{ getErrorMessage('fullName') }}
+          </div>
+        </div>
+
+        <!-- National ID -->
+        <div class="col-md-6">
+          <label class="form-label">رقم الهوية الوطنية <span class="text-danger">*</span></label>
+          <input
+            type="text"
+            class="form-control"
+            formControlName="nationalId"
+            [class.is-invalid]="ownerForm.get('nationalId')?.invalid && ownerForm.get('nationalId')?.touched"
+            placeholder="1234567890"
+            maxlength="10">
+          <div class="invalid-feedback">
+            {{ getErrorMessage('nationalId') }}
+          </div>
+        </div>
+
+        <!-- Phone -->
+        <div class="col-md-6">
+          <label class="form-label">رقم الجوال <span class="text-danger">*</span></label>
+          <input
+            type="tel"
+            class="form-control"
+            formControlName="phone"
+            [class.is-invalid]="ownerForm.get('phone')?.invalid && ownerForm.get('phone')?.touched"
+            placeholder="05xxxxxxxx"
+            maxlength="10">
+          <div class="invalid-feedback">
+            {{ getErrorMessage('phone') }}
+          </div>
+        </div>
+
+        <!-- Email -->
+        <div class="col-md-6">
+          <label class="form-label">البريد الإلكتروني</label>
+          <input
+            type="email"
+            class="form-control"
+            formControlName="email"
+            [class.is-invalid]="ownerForm.get('email')?.invalid && ownerForm.get('email')?.touched"
+            placeholder="example@email.com">
+          <div class="invalid-feedback">
+            {{ getErrorMessage('email') }}
+          </div>
+        </div>
+
+        <!-- Address -->
+        <div class="col-md-12">
+          <label class="form-label">العنوان</label>
+          <textarea
+            class="form-control"
+            formControlName="address"
+            rows="2"
+            placeholder="أدخل العنوان"></textarea>
+        </div>
+
+        <!-- Bank Account -->
+        <div class="col-md-6">
+          <label class="form-label">رقم الحساب البنكي (IBAN)</label>
+          <input
+            type="text"
+            class="form-control"
+            formControlName="bankAccount"
+            placeholder="SAxx xxxx xxxx xxxx xxxx xxxx">
+        </div>
+
+        <!-- Status -->
+        <div class="col-md-6">
+          <label class="form-label">الحالة <span class="text-danger">*</span></label>
+          <select class="form-select" formControlName="status">
+            <option value="Active">نشط</option>
+            <option value="Inactive">غير نشط</option>
+            <option value="Suspended">موقوف</option>
+          </select>
+        </div>
+
+        <!-- Notes -->
+        <div class="col-md-12">
+          <label class="form-label">ملاحظات</label>
+          <textarea
+            class="form-control"
+            formControlName="notes"
+            rows="3"
+            placeholder="أدخل أي ملاحظات إضافية"></textarea>
+        </div>
+      </div>
+
+      <hr class="my-4">
+
+      <!-- Actions -->
+      <div class="d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-secondary" (click)="cancel()" [disabled]="loading">
+          إلغاء
+        </button>
+        <button type="submit" class="btn btn-brand" [disabled]="loading">
+          <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
+          {{ isEditMode ? 'حفظ التعديلات' : 'إضافة المالك' }}
+        </button>
+      </div>
+
+      <div *ngIf="!isEditMode" class="alert alert-info mt-3" role="alert">
+        <strong>ملاحظة:</strong> عند إضافة مالك جديد، سيتم إنشاء حساب خاص به تلقائياً وستظهر بيانات الدخول في نافذة منبثقة.
+      </div>
+    </form>
+  </div>
+</div>

@@ -1,0 +1,81 @@
+<div class="shell-container" dir="rtl">
+  <!-- Topbar -->
+  <nav class="topbar navbar navbar-expand-lg">
+    <div class="container-fluid">
+      <div class="d-flex align-items-center gap-3">
+        <button class="btn btn-link text-brand p-0 sidebar-toggle" (click)="toggleSidebar()">
+          <i class="bi bi-list fs-3"></i>
+        </button>
+        <img src="/assets/branding/logo-white-bg-with-name.jpeg" alt="Omar Almarbie Logo" class="app-logo">
+      </div>
+
+      <div class="d-flex align-items-center" *ngIf="user$ | async as user">
+        <div class="dropdown">
+          <button class="btn btn-outline-secondary dropdown-toggle d-flex align-items-center gap-2" type="button"
+                  id="userMenu" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-person-circle"></i>
+            <span>{{ user.username }}</span>
+            <span class="badge bg-brand">{{ user.role }}</span>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
+            <li><a class="dropdown-item" href="#"><i class="bi bi-person ms-2"></i>الملف الشخصي</a></li>
+            <li><a class="dropdown-item" href="#"><i class="bi bi-gear ms-2"></i>الإعدادات</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item text-danger" (click)="logout()" style="cursor: pointer;">
+              <i class="bi bi-box-arrow-right ms-2"></i>تسجيل الخروج
+            </a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="shell-body">
+    <!-- Sidebar -->
+    <aside class="sidebar" [class.sidebar-collapsed]="!sidebarOpen">
+      <nav class="nav flex-column p-3">
+        <a [routerLink]="['/app/dashboard']" routerLinkActive="active" class="nav-link">
+          📊 لوحة التحكم
+        </a>
+        <a [routerLink]="['/app/owners']" routerLinkActive="active" class="nav-link">
+          👤 الملاك
+        </a>
+        <a [routerLink]="['/app/buildings']" routerLinkActive="active" class="nav-link">
+          🏗️ المباني
+        </a>
+        <a [routerLink]="['/app/units']" routerLinkActive="active" class="nav-link">
+          🏢 الوحدات
+        </a>
+        <a [routerLink]="['/app/renters']" routerLinkActive="active" class="nav-link">
+          🔑 المستأجرون
+        </a>
+        <a [routerLink]="['/app/leases']" routerLinkActive="active" class="nav-link">
+          📄 عقود الإيجار
+        </a>
+        <a [routerLink]="['/app/requests']" routerLinkActive="active" class="nav-link">
+          📋 الطلبات والشكاوى
+        </a>
+        <a [routerLink]="['/app/inquiries']" routerLinkActive="active" class="nav-link">
+          📨 استفسارات العملاء
+        </a>
+        <a [routerLink]="['/app/accounting']" routerLinkActive="active" class="nav-link">
+          💰 الحسابات
+        </a>
+        <hr>
+        <a [routerLink]="['/app/admin/roles']" routerLinkActive="active" class="nav-link">
+          🔐 الأدوار والصلاحيات
+        </a>
+        <a [routerLink]="['/app/admin/settings']" routerLinkActive="active" class="nav-link">
+          ⚙️ الإعدادات
+        </a>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <div class="container-fluid p-4">
+        <router-outlet></router-outlet>
+      </div>
+    </main>
+  </div>
+</div>

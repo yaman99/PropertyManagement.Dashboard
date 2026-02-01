@@ -1,0 +1,26 @@
+.role-card {
+  transition: all 0.2s;
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  }
+}
+
+.role-icon {
+  font-size: 3rem;
+}
+
+.bg-brand {
+  background-color: var(--brand-color) !important;
+}
+
+.btn-outline-brand {
+  color: var(--brand-color);
+  border-color: var(--brand-color);
+
+  &:hover {
+    background-color: var(--brand-color);
+    color: white;
+  }
+}

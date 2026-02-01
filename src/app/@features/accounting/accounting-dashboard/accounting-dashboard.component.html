@@ -1,0 +1,246 @@
+<app-page-header
+  title="الحسابات"
+  icon="💰"
+  [breadcrumbs]="[{label: 'الحسابات'}]">
+  <div actions>
+    <button
+      *appHasPermission="[Permission.ACCOUNTING_WRITE]"
+      class="btn btn-outline-warning me-2"
+      (click)="clearEntries()"
+      title="مسح القيود فقط مع الإبقاء على الحسابات">
+      <i class="bi bi-eraser"></i> مسح القيود
+    </button>
+    <button
+      *appHasPermission="[Permission.ACCOUNTING_WRITE]"
+      class="btn btn-outline-danger me-2"
+      (click)="resetData()">
+      <i class="bi bi-arrow-counterclockwise"></i> إعادة تعيين
+    </button>
+    <button
+      *appHasPermission="[Permission.ACCOUNTING_WRITE]"
+      class="btn btn-brand"
+      [routerLink]="['entries', 'new']">
+      <i class="bi bi-plus-lg"></i> قيد جديد
+    </button>
+  </div>
+</app-page-header>
+
+<div dir="rtl">
+  <!-- Trust Accounting KPIs -->
+  <div class="row g-4 mb-4">
+    <div class="col-md-3">
+      <div class="card border-start border-4 border-warning h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <h6 class="text-muted mb-1">مستحقات الملاك</h6>
+              <h3 class="mb-0 text-warning">{{ totalOwedToOwners | number }} ر.س</h3>
+              <small class="text-muted">المبالغ المستحقة للصرف</small>
+            </div>
+            <div class="fs-1 text-warning opacity-50"><i class="bi bi-wallet2"></i></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card border-start border-4 border-success h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <h6 class="text-muted mb-1">رسوم الإدارة</h6>
+              <h3 class="mb-0 text-success">{{ adminFeeRevenue | number }} ر.س</h3>
+              <small class="text-muted">إجمالي إيرادات الرسوم</small>
+            </div>
+            <div class="fs-1 text-success opacity-50"><i class="bi bi-percent"></i></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card border-start border-4 border-danger h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <h6 class="text-muted mb-1">دفعات متأخرة</h6>
+              <h3 class="mb-0 text-danger">{{ overduePaymentsCount }}</h3>
+              <small class="text-muted">دفعات تجاوزت الاستحقاق</small>
+            </div>
+            <div class="fs-1 text-danger opacity-50"><i class="bi bi-exclamation-triangle"></i></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card border-start border-4 border-info h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <h6 class="text-muted mb-1">طلبات مفتوحة</h6>
+              <h3 class="mb-0 text-info">{{ openRequestsCount }}</h3>
+              <small class="text-muted">طلبات صيانة قيد المعالجة</small>
+            </div>
+            <div class="fs-1 text-info opacity-50"><i class="bi bi-tools"></i></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="row g-4 mb-4">
+    <div class="col-md-3">
+      <div class="card bg-success text-white h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <h6 class="card-title opacity-75">الأصول</h6>
+              <h3 class="mb-0">{{ totalAssets | number }} ر.س</h3>
+            </div>
+            <div class="fs-1 opacity-50">📊</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card bg-danger text-white h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <h6 class="card-title opacity-75">الالتزامات</h6>
+              <h3 class="mb-0">{{ totalLiabilities | number }} ر.س</h3>
+            </div>
+            <div class="fs-1 opacity-50">📉</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card bg-brand text-white h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <h6 class="card-title opacity-75">الإيرادات</h6>
+              <h3 class="mb-0">{{ totalRevenue | number }} ر.س</h3>
+            </div>
+            <div class="fs-1 opacity-50">💰</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card bg-warning text-dark h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <h6 class="card-title opacity-75">المصروفات</h6>
+              <h3 class="mb-0">{{ totalExpenses | number }} ر.س</h3>
+            </div>
+            <div class="fs-1 opacity-50">💸</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Links -->
+  <div class="row g-4 mb-4">
+    <div class="col-md-4">
+      <div class="card h-100">
+        <div class="card-body d-flex align-items-center">
+          <div class="me-3 fs-1">📋</div>
+          <div class="flex-grow-1">
+            <h5 class="mb-1">دليل الحسابات</h5>
+            <p class="text-muted mb-0">عرض وإدارة جميع الحسابات</p>
+          </div>
+          <a [routerLink]="['accounts']" class="btn btn-outline-brand">
+            عرض <i class="bi bi-arrow-left"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card h-100">
+        <div class="card-body d-flex align-items-center">
+          <div class="me-3 fs-1">📝</div>
+          <div class="flex-grow-1">
+            <h5 class="mb-1">القيود المحاسبية</h5>
+            <p class="text-muted mb-0">عرض جميع القيود والحركات</p>
+          </div>
+          <a [routerLink]="['entries']" class="btn btn-outline-brand">
+            عرض <i class="bi bi-arrow-left"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card h-100">
+        <div class="card-body d-flex align-items-center">
+          <div class="me-3 fs-1">👥</div>
+          <div class="flex-grow-1">
+            <h5 class="mb-1">أرصدة الملاك</h5>
+            <p class="text-muted mb-0">عرض مستحقات الملاك وصرف الدفعات</p>
+          </div>
+          <a [routerLink]="['owner-balances']" class="btn btn-outline-brand">
+            عرض <i class="bi bi-arrow-left"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Entries -->
+  <div class="card">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">آخر القيود</h5>
+      <a [routerLink]="['entries']" class="btn btn-sm btn-outline-brand">
+        عرض الكل
+      </a>
+    </div>
+    <div class="card-body">
+      <div *ngIf="recentEntries.length === 0" class="text-center py-4 text-muted">
+        لا توجد قيود بعد
+      </div>
+
+      <div *ngIf="recentEntries.length > 0" class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              <th>التاريخ</th>
+              <th>الحساب</th>
+              <th>مدين</th>
+              <th>دائن</th>
+              <th>البيان</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let entry of recentEntries">
+              <td>{{ formatDate(entry.date) }}</td>
+              <td>{{ getAccountName(entry.accountId) }}</td>
+              <td>
+                <span *ngIf="entry.debit > 0" class="text-success">
+                  {{ entry.debit | number }}
+                </span>
+                <span *ngIf="entry.debit === 0">-</span>
+              </td>
+              <td>
+                <span *ngIf="entry.credit > 0" class="text-danger">
+                  {{ entry.credit | number }}
+                </span>
+                <span *ngIf="entry.credit === 0">-</span>
+              </td>
+              <td>{{ entry.note }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

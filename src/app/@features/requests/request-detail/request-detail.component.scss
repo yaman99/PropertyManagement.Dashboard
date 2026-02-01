@@ -1,0 +1,8 @@
+.comment-item {
+  border-right: 3px solid var(--brand-color);
+}
+
+.comments-list {
+  max-height: 400px;
+  overflow-y: auto;
+}

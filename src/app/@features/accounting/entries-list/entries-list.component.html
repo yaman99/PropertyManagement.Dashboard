@@ -1,0 +1,123 @@
+<app-page-header
+  title="القيود المحاسبية"
+  icon="📝"
+  [breadcrumbs]="[
+    {label: 'الحسابات', url: '/app/accounting'},
+    {label: 'القيود'}
+  ]">
+  <div actions>
+    <button
+      *appHasPermission="[Permission.ACCOUNTING_WRITE]"
+      class="btn btn-brand"
+      [routerLink]="['new']">
+      <i class="bi bi-plus-lg"></i> قيد جديد
+    </button>
+  </div>
+</app-page-header>
+
+<!-- Filters -->
+<div class="card mb-4" dir="rtl">
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-md-3">
+        <label class="form-label">البحث</label>
+        <input
+          type="text"
+          class="form-control"
+          [(ngModel)]="searchTerm"
+          (ngModelChange)="applyFilters()"
+          placeholder="ابحث بالبيان...">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">الحساب</label>
+        <select class="form-select" [(ngModel)]="accountFilter" (ngModelChange)="applyFilters()">
+          <option value="All">الكل</option>
+          <option *ngFor="let account of accounts" [value]="account.id">
+            {{ account.name }}
+          </option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">من تاريخ</label>
+        <input
+          type="date"
+          class="form-control"
+          [(ngModel)]="dateFrom"
+          (ngModelChange)="applyFilters()">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">إلى تاريخ</label>
+        <input
+          type="date"
+          class="form-control"
+          [(ngModel)]="dateTo"
+          (ngModelChange)="applyFilters()">
+      </div>
+      <div class="col-md-2 d-flex align-items-end">
+        <button class="btn btn-outline-secondary w-100" (click)="clearFilters()">
+          مسح
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Entries Table -->
+<div class="card" dir="rtl">
+  <div class="card-body">
+    <div *ngIf="filteredEntries.length === 0">
+      <app-empty-state
+        icon="📝"
+        title="لا توجد قيود"
+        message="لم يتم العثور على أي قيود محاسبية">
+        <button
+          *appHasPermission="[Permission.ACCOUNTING_WRITE]"
+          class="btn btn-brand"
+          [routerLink]="['new']">
+          <i class="bi bi-plus-lg"></i> قيد جديد
+        </button>
+      </app-empty-state>
+    </div>
+
+    <div *ngIf="filteredEntries.length > 0" class="table-responsive">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>التاريخ</th>
+            <th>الحساب</th>
+            <th>مدين</th>
+            <th>دائن</th>
+            <th>البيان</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let entry of filteredEntries">
+            <td>{{ formatDate(entry.date) }}</td>
+            <td class="fw-bold">{{ getAccountName(entry.accountId) }}</td>
+            <td>
+              <span *ngIf="entry.debit > 0" class="text-success fw-bold">
+                {{ entry.debit | number }}
+              </span>
+              <span *ngIf="entry.debit === 0">-</span>
+            </td>
+            <td>
+              <span *ngIf="entry.credit > 0" class="text-danger fw-bold">
+                {{ entry.credit | number }}
+              </span>
+              <span *ngIf="entry.credit === 0">-</span>
+            </td>
+            <td>{{ entry.note }}</td>
+          </tr>
+        </tbody>
+        <tfoot class="table-light">
+          <tr class="fw-bold">
+            <td colspan="2">المجموع</td>
+            <td class="text-success">{{ getTotalDebit() | number }}</td>
+            <td class="text-danger">{{ getTotalCredit() | number }}</td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+</div>

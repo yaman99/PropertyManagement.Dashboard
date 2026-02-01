@@ -1,0 +1,205 @@
+<ng-container *ngIf="unit$ | async as unit">
+  <!-- Header -->
+  <div class="public-header py-4">
+    <div class="container">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <a [routerLink]="['/units']" class="btn btn-light">
+          <i class="bi bi-arrow-right"></i> العودة للوحدات
+        </a>
+        <img src="/assets/branding/logo-white-bg.jpeg" alt="Omar Almarbie" style="max-height: 40px; border-radius: 4px;">
+      </div>
+      <h1 class="text-white fw-bold">{{ unit.unitCode }}</h1>
+      <p class="text-white-50">{{ getUnitTypeLabel(unit.type) }}</p>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="container my-5">
+    <div class="row g-4">
+      <!-- Unit Details -->
+      <div class="col-lg-8">
+        <!-- Main Image -->
+        <div class="card mb-4">
+          <div class="unit-image">
+            <i class="bi bi-building fs-1"></i>
+          </div>
+        </div>
+
+        <!-- Details Card -->
+        <div class="card" dir="rtl">
+          <div class="card-body">
+            <h3 class="card-title mb-4">تفاصيل الوحدة</h3>
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <div class="detail-item">
+                  <i class="bi bi-tag text-brand"></i>
+                  <div>
+                    <div class="text-muted small">كود الوحدة</div>
+                    <div class="fw-bold">{{ unit.unitCode }}</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="detail-item">
+                  <i class="bi bi-cash text-brand"></i>
+                  <div>
+                    <div class="text-muted small">الإيجار الشهري</div>
+                    <div class="fw-bold">{{ unit.rentPrice | number }} ر.س</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-6" *ngIf="unit.areaSqm">
+                <div class="detail-item">
+                  <i class="bi bi-arrows-fullscreen text-brand"></i>
+                  <div>
+                    <div class="text-muted small">المساحة</div>
+                    <div class="fw-bold">{{ unit.areaSqm }} متر مربع</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-6" *ngIf="unit.floor">
+                <div class="detail-item">
+                  <i class="bi bi-layers text-brand"></i>
+                  <div>
+                    <div class="text-muted small">الطابق</div>
+                    <div class="fw-bold">{{ unit.floor }}</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-6" *ngIf="unit.rooms">
+                <div class="detail-item">
+                  <i class="bi bi-door-closed text-brand"></i>
+                  <div>
+                    <div class="text-muted small">عدد الغرف</div>
+                    <div class="fw-bold">{{ unit.rooms }}</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-6" *ngIf="unit.areaSqm">
+                <div class="detail-item">
+                  <i class="bi bi-rulers text-brand"></i>
+                  <div>
+                    <div class="text-muted small">المساحة</div>
+                    <div class="fw-bold">{{ unit.areaSqm }} م²</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-6" *ngIf="unit.buildingName">
+                <div class="detail-item">
+                  <i class="bi bi-building text-brand"></i>
+                  <div>
+                    <div class="text-muted small">المبنى</div>
+                    <div class="fw-bold">{{ unit.buildingName }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Inquiry Form -->
+      <div class="col-lg-4">
+        <div class="card sticky-top" style="top: 2rem;" dir="rtl">
+          <div class="card-header bg-brand text-white">
+            <h5 class="mb-0">استفسر عن هذه الوحدة</h5>
+          </div>
+          <div class="card-body">
+            <form [formGroup]="inquiryForm" (ngSubmit)="submitInquiry(unit)">
+              <div class="mb-3">
+                <label class="form-label">الاسم الكامل <span class="text-danger">*</span></label>
+                <input
+                  type="text"
+                  class="form-control"
+                  formControlName="fullName"
+                  placeholder="أدخل اسمك الكامل">
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">البريد الإلكتروني <span class="text-danger">*</span></label>
+                <input
+                  type="email"
+                  class="form-control"
+                  formControlName="email"
+                  placeholder="example@email.com">
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">رقم الهاتف <span class="text-danger">*</span></label>
+                <input
+                  type="tel"
+                  class="form-control"
+                  formControlName="phone"
+                  placeholder="+966 XX XXX XXXX">
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">الجنسية</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  formControlName="nationality"
+                  placeholder="الجنسية">
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">تاريخ الانتقال المفضل</label>
+                <input
+                  type="date"
+                  class="form-control"
+                  formControlName="preferredMoveInDate">
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">عدد الأفراد</label>
+                <input
+                  type="number"
+                  class="form-control"
+                  formControlName="numberOfOccupants"
+                  min="1">
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">رسالة الاستفسار <span class="text-danger">*</span></label>
+                <textarea
+                  class="form-control"
+                  formControlName="message"
+                  rows="4"
+                  placeholder="اكتب استفسارك هنا..."></textarea>
+              </div>
+
+              <button
+                type="submit"
+                class="btn btn-brand w-100"
+                [disabled]="submitting">
+                <span *ngIf="!submitting">
+                  <i class="bi bi-send"></i> إرسال الاستفسار
+                </span>
+                <span *ngIf="submitting">
+                  <span class="spinner-border spinner-border-sm me-2"></span>
+                  جاري الإرسال...
+                </span>
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</ng-container>
+
+<!-- Footer -->
+<footer class="bg-light mt-5 py-4">
+  <div class="container text-center">
+    <p class="text-muted mb-0">
+      © 2026 Omar Almarbie Real Estate. جميع الحقوق محفوظة.
+    </p>
+  </div>
+</footer>

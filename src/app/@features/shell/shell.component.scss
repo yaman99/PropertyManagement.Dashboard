@@ -1,0 +1,82 @@
+.shell-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.topbar {
+  background-color: var(--surface-white);
+  border-bottom: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+  z-index: 1000;
+
+  .sidebar-toggle {
+    border: none;
+    background: transparent;
+    line-height: 1;
+
+    &:hover {
+      opacity: 0.8;
+    }
+
+    &:focus {
+      box-shadow: none;
+    }
+  }
+}
+
+.shell-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  direction: ltr; // Force LTR for layout, then position sidebar on right
+}
+
+.sidebar {
+  width: 280px;
+  background-color: var(--bg-sidebar);
+  border-left: 1px solid var(--border-color);
+  box-shadow: var(--shadow-md);
+  overflow-y: auto;
+  transition: all 0.3s ease;
+  order: 2; // Put sidebar on the right side
+  direction: rtl; // Content inside is RTL
+
+  &.sidebar-collapsed {
+    width: 0;
+    padding: 0;
+    border: none;
+    overflow: hidden;
+  }
+
+  .nav-link {
+    color: var(--color-text-body);
+    padding: 0.75rem 1rem;
+    border-radius: var(--border-radius);
+    margin-bottom: 0.25rem;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    &:hover {
+      background-color: var(--surface-200);
+      color: var(--color-primary);
+    }
+
+    &.active {
+      background-color: var(--color-primary);
+      color: white;
+      font-weight: var(--font-weight-medium);
+    }
+  }
+}
+
+.main-content {
+  flex: 1;
+  overflow-y: auto;
+  background-color: var(--bg-page);
+  order: 1; // Put main content on the left
+  direction: rtl; // Content inside is RTL
+}
