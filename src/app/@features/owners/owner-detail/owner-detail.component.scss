@@ -1,0 +1,67 @@
+.info-label {
+  font-size: 0.85rem;
+  color: #888;
+  margin-bottom: 0.25rem;
+}
+
+.info-value {
+  font-weight: 500;
+  color: #333;
+}
+
+.text-brand {
+  color: var(--brand-primary, #BC8545) !important;
+}
+
+.stat-card {
+  .stat-icon {
+    font-size: 1.5rem;
+    margin-bottom: 0.25rem;
+    color: var(--brand-primary, #BC8545);
+  }
+
+  .stat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #333;
+  }
+
+  .stat-label {
+    font-size: 0.85rem;
+    color: #888;
+  }
+
+  &.text-success .stat-icon {
+    color: #198754;
+  }
+
+  &.text-warning .stat-icon {
+    color: #ffc107;
+  }
+}
+
+.building-thumb {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+}
+
+.building-thumb-placeholder {
+  width: 40px;
+  height: 40px;
+  background: #f0e6d6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--brand-primary, #BC8545);
+}
+
+.btn-outline-brand {
+  color: var(--brand-primary, #BC8545);
+  border-color: var(--brand-primary, #BC8545);
+
+  &:hover {
+    background-color: var(--brand-primary, #BC8545);
+    color: #fff;
+  }
+}

@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { Store } from '@ngxs/store';
 import { Observable, combineLatest, map } from 'rxjs';
 import { Building, BuildingStatus } from '../../../@core/domain/models/building.model';
+import { AuthState } from '../../../@core/state/auth.state';
 import { Owner } from '../../../@core/domain/models/owner.model';
 import { BuildingsState, LoadBuildings, DeleteBuilding } from '../../../@core/state/buildings.state';
 import { OwnersState, OwnersActions } from '../../../@core/state/owners.state';
@@ -42,6 +43,7 @@ export class BuildingsListComponent implements OnInit {
   statusFilter: BuildingStatus | 'All' = 'All';
 
   Permission = Permission;
+  isAdmin = false;
 
   get filteredBuildings$(): Observable<BuildingWithOwner[]> {
     return this.buildings$.pipe(
@@ -91,6 +93,8 @@ export class BuildingsListComponent implements OnInit {
 
   ngOnInit() {
     this.loadData();
+    const user = this.store.selectSnapshot(AuthState.user);
+    this.isAdmin = user?.role === 'Admin';
   }
 
   loadData() {
@@ -130,6 +134,17 @@ export class BuildingsListComponent implements OnInit {
   manageUnits(building: Building) {
     // Navigate to units page with building filter
     this.router.navigate(['/app/units'], { queryParams: { buildingId: building.id } });
+  }
+
+  viewOnMap(building: Building) {
+    if (building.latitude && building.longitude) {
+      window.open(
+        `https://www.openstreetmap.org/?mlat=${building.latitude}&mlon=${building.longitude}#map=17/${building.latitude}/${building.longitude}`,
+        '_blank'
+      );
+    } else {
+      this.alertService.toastWarn('لم يتم تحديد موقع المبنى على الخريطة');
+    }
   }
 
   clearFilters() {

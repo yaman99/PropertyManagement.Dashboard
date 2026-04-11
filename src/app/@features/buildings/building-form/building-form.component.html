@@ -10,7 +10,12 @@
 <div class="card" dir="rtl">
   <div class="card-body">
     <form [formGroup]="buildingForm" (ngSubmit)="onSubmit()">
-      <div class="row g-4">
+
+      <!-- ===== Section 1: Basic Info ===== -->
+      <h5 class="section-title mb-3">
+        <i class="bi bi-info-circle"></i> المعلومات الأساسية
+      </h5>
+      <div class="row g-3 mb-4">
         <!-- Owner Selection -->
         <div class="col-md-6">
           <label class="form-label">المالك <span class="text-danger">*</span></label>
@@ -31,7 +36,7 @@
           <input type="text" class="form-control" formControlName="name"
             placeholder="مثال: برج السلام"
             [ngClass]="{'is-invalid': buildingForm.get('name')?.touched && buildingForm.get('name')?.invalid}">
-          <div class="invalid-feedback">اسم المبنى مطلوب (3 أحرف على الأقل)</div>
+          <div class="invalid-feedback">اسم المبنى مطلوب (حرفين على الأقل)</div>
         </div>
 
         <!-- Address -->
@@ -44,24 +49,17 @@
         </div>
 
         <!-- City -->
-        <div class="col-md-6">
+        <div class="col-md-4">
           <label class="form-label">المدينة</label>
           <input type="text" class="form-control" formControlName="city"
             placeholder="مثال: الرياض">
         </div>
 
         <!-- District -->
-        <div class="col-md-6">
+        <div class="col-md-4">
           <label class="form-label">الحي</label>
           <input type="text" class="form-control" formControlName="district"
             placeholder="مثال: حي النخيل">
-        </div>
-
-        <!-- Total Floors -->
-        <div class="col-md-4">
-          <label class="form-label">عدد الطوابق</label>
-          <input type="number" class="form-control" formControlName="totalFloors"
-            min="1" max="100" placeholder="مثال: 10">
         </div>
 
         <!-- Year Built -->
@@ -69,6 +67,13 @@
           <label class="form-label">سنة البناء</label>
           <input type="number" class="form-control" formControlName="yearBuilt"
             min="1900" [max]="2026" placeholder="مثال: 2020">
+        </div>
+
+        <!-- Total Floors -->
+        <div class="col-md-4">
+          <label class="form-label">عدد الطوابق</label>
+          <input type="number" class="form-control" formControlName="totalFloors"
+            min="1" max="100" placeholder="مثال: 10">
         </div>
 
         <!-- Status (only in edit mode) -->
@@ -82,7 +87,212 @@
         </div>
       </div>
 
-      <!-- Actions -->
+      <hr class="my-4">
+
+      <!-- ===== Section 2: Images ===== -->
+      <h5 class="section-title mb-3">
+        <i class="bi bi-image"></i> الصور والمستندات
+      </h5>
+      <div class="row g-3 mb-4">
+        <!-- Building Image -->
+        <div class="col-md-6">
+          <label class="form-label">صورة المبنى</label>
+          <div class="image-upload-area">
+            <div *ngIf="buildingImagePreview" class="image-preview mb-2">
+              <img [src]="buildingImagePreview" alt="صورة المبنى" class="img-thumbnail">
+              <button type="button" class="btn btn-sm btn-danger remove-image" (click)="removeImage('building')">
+                <i class="bi bi-x-lg"></i>
+              </button>
+            </div>
+            <input type="file" class="form-control" accept="image/*"
+              (change)="onBuildingImageSelected($event)"
+              [class.d-none]="buildingImagePreview">
+            <small class="text-muted d-block mt-1">ارفع صورة المبنى (JPG, PNG)</small>
+          </div>
+        </div>
+
+        <!-- Deed Image -->
+        <div class="col-md-6">
+          <label class="form-label">صورة صك المبنى</label>
+          <div class="image-upload-area">
+            <div *ngIf="deedImagePreview" class="image-preview mb-2">
+              <img [src]="deedImagePreview" alt="صورة الصك" class="img-thumbnail">
+              <button type="button" class="btn btn-sm btn-danger remove-image" (click)="removeImage('deed')">
+                <i class="bi bi-x-lg"></i>
+              </button>
+            </div>
+            <input type="file" class="form-control" accept="image/*"
+              (change)="onDeedImageSelected($event)"
+              [class.d-none]="deedImagePreview">
+            <small class="text-muted d-block mt-1">ارفع صورة صك المبنى (JPG, PNG, PDF)</small>
+          </div>
+        </div>
+      </div>
+
+      <hr class="my-4">
+
+      <!-- ===== Section 3: Map Location ===== -->
+      <h5 class="section-title mb-3">
+        <i class="bi bi-geo-alt"></i> الموقع على الخريطة
+      </h5>
+      <div class="row g-3 mb-4">
+        <div class="col-12">
+          <div #mapContainer class="map-container rounded border"></div>
+          <small class="text-muted d-block mt-1">انقر على الخريطة لتحديد موقع المبنى، أو اسحب العلامة لتعديل الموقع</small>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">خط العرض</label>
+          <input type="number" class="form-control" formControlName="latitude" step="0.000001" readonly>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">خط الطول</label>
+          <input type="number" class="form-control" formControlName="longitude" step="0.000001" readonly>
+        </div>
+      </div>
+
+      <hr class="my-4">
+
+      <!-- ===== Section 4: Unit Counts ===== -->
+      <h5 class="section-title mb-3">
+        <i class="bi bi-building"></i> أعداد الوحدات حسب النوع
+      </h5>
+      <div class="row g-3 mb-4">
+        <div class="col-md-4 col-6">
+          <label class="form-label">عدد الشقق</label>
+          <input type="number" class="form-control" formControlName="apartmentCount" min="0" placeholder="0">
+        </div>
+        <div class="col-md-4 col-6">
+          <label class="form-label">عدد المحلات</label>
+          <input type="number" class="form-control" formControlName="shopCount" min="0" placeholder="0">
+        </div>
+        <div class="col-md-4 col-6">
+          <label class="form-label">غرف الحراس</label>
+          <input type="number" class="form-control" formControlName="guardRoomCount" min="0" placeholder="0">
+        </div>
+        <div class="col-md-4 col-6">
+          <label class="form-label">الروف (الأسطح)</label>
+          <input type="number" class="form-control" formControlName="rooftopCount" min="0" placeholder="0">
+        </div>
+        <div class="col-md-4 col-6">
+          <label class="form-label">الشقق المخدومة</label>
+          <input type="number" class="form-control" formControlName="servicedApartmentCount" min="0" placeholder="0">
+        </div>
+      </div>
+
+      <hr class="my-4">
+
+      <!-- ===== Section 5: Guard Info ===== -->
+      <h5 class="section-title mb-3">
+        <i class="bi bi-person-badge"></i> معلومات الحارس
+      </h5>
+      <div class="row g-3 mb-4">
+        <div class="col-md-6">
+          <label class="form-label">اسم الحارس</label>
+          <input type="text" class="form-control" formControlName="guardName" placeholder="اسم حارس المبنى">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">رقم الحارس</label>
+          <input type="tel" class="form-control" formControlName="guardPhone" placeholder="05XXXXXXXX">
+        </div>
+      </div>
+
+      <hr class="my-4">
+
+      <!-- ===== Section 6: Management ===== -->
+      <h5 class="section-title mb-3">
+        <i class="bi bi-people"></i> إدارة المبنى
+      </h5>
+      <div class="row g-3 mb-4">
+        <div class="col-md-6">
+          <label class="form-label">مسؤول المبنى مع المالك</label>
+          <input type="text" class="form-control" formControlName="ownerManagerName"
+            placeholder="اسم المسؤول عن التواصل مع المالك">
+          <small class="text-muted">يتم التعديل من قبل مدير النظام</small>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">مسؤول المبنى مع المستأجرين</label>
+          <input type="text" class="form-control" formControlName="renterManagerName"
+            placeholder="اسم المسؤول عن التواصل مع المستأجرين">
+        </div>
+      </div>
+
+      <hr class="my-4">
+
+      <!-- ===== Section 7: Electricity Meters ===== -->
+      <h5 class="section-title mb-3">
+        <i class="bi bi-lightning"></i> عدادات الكهرباء
+      </h5>
+      <div class="mb-4">
+        <!-- Meters List -->
+        <div *ngFor="let meter of metersArray.controls; let i = index" class="meter-card card mb-3">
+          <div class="card-body" [formGroupName]="i">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h6 class="mb-0">عداد #{{ i + 1 }}</h6>
+              <button type="button" class="btn btn-sm btn-outline-danger" (click)="removeMeter(i)">
+                <i class="bi bi-trash"></i> حذف
+              </button>
+            </div>
+
+            <div class="row g-3">
+              <!-- Meter Number -->
+              <div class="col-md-6">
+                <label class="form-label">رقم العداد <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" formControlName="meterNumber"
+                  placeholder="أدخل رقم العداد"
+                  [ngClass]="{'is-invalid': metersArray.at(i).get('meterNumber')?.touched && metersArray.at(i).get('meterNumber')?.invalid}">
+                <div class="invalid-feedback">رقم العداد مطلوب</div>
+              </div>
+
+              <!-- Meter Type -->
+              <div class="col-md-6">
+                <label class="form-label">نوع العداد <span class="text-danger">*</span></label>
+                <select class="form-select" formControlName="type">
+                  <option *ngFor="let type of meterTypes" [value]="type">
+                    {{ getMeterTypeLabel(type) }}
+                  </option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Shared Meter Warning & Unit Selection -->
+            <div *ngIf="isSharedMeter(i)" class="mt-3">
+              <div class="alert alert-warning d-flex align-items-center" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                <div>
+                  هذا العداد مشترك
+                  <span *ngIf="getLinkedUnitNames(i)"> مع الوحدات: <strong>{{ getLinkedUnitNames(i) }}</strong></span>
+                </div>
+              </div>
+
+              <!-- Unit selection for shared meters (only in edit mode with existing units) -->
+              <div *ngIf="buildingUnits.length > 0" class="mt-2">
+                <label class="form-label">اختر الوحدات المشتركة في هذا العداد:</label>
+                <div class="units-checklist">
+                  <div *ngFor="let unit of buildingUnits" class="form-check">
+                    <input class="form-check-input" type="checkbox"
+                      [id]="'meter-' + i + '-unit-' + unit.id"
+                      [checked]="isUnitLinked(i, unit.id)"
+                      (change)="toggleUnitLink(i, unit.id)">
+                    <label class="form-check-label" [for]="'meter-' + i + '-unit-' + unit.id">
+                      {{ unit.unitCode }} - {{ unit.type }}
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <div *ngIf="buildingUnits.length === 0 && isEditMode" class="text-muted small mt-1">
+                لا توجد وحدات في هذا المبنى بعد. يمكنك ربط الوحدات لاحقاً بعد إضافتها.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Add Meter Button -->
+        <button type="button" class="btn btn-outline-brand" (click)="addMeter()">
+          <i class="bi bi-plus-lg me-1"></i> إضافة عداد كهرباء
+        </button>
+      </div>
+
+      <!-- ===== Actions ===== -->
       <div class="mt-4 d-flex gap-2">
         <button type="submit" class="btn btn-brand" [disabled]="loading">
           <span *ngIf="loading" class="spinner-border spinner-border-sm me-1"></span>

@@ -1,1 +1,26 @@
-// No custom styles needed - using Bootstrap and shared styles
+.building-thumb {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+}
+
+.building-thumb-placeholder {
+  width: 48px;
+  height: 48px;
+  background: #f0e6d6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--brand-primary, #BC8545);
+  font-size: 1.2rem;
+}
+
+.btn-outline-brand {
+  color: var(--brand-primary, #BC8545);
+  border-color: var(--brand-primary, #BC8545);
+
+  &:hover {
+    background-color: var(--brand-primary, #BC8545);
+    color: #fff;
+  }
+}

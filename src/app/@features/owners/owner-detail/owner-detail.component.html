@@ -1,0 +1,181 @@
+<app-page-header
+  [title]="owner?.fullName || 'تفاصيل المالك'"
+  icon="👤"
+  [breadcrumbs]="[
+    {label: 'الملاك', url: '/app/owners'},
+    {label: 'تفاصيل المالك'}
+  ]">
+  <div actions>
+    <button class="btn btn-brand" [routerLink]="['/app/owners/edit', owner?.id]">
+      <i class="bi bi-pencil"></i> تعديل
+    </button>
+  </div>
+</app-page-header>
+
+<!-- Loading -->
+<div *ngIf="loading" class="text-center py-5">
+  <div class="spinner-border text-brand" role="status">
+    <span class="visually-hidden">جاري التحميل...</span>
+  </div>
+</div>
+
+<div *ngIf="!loading && owner" dir="rtl">
+  <!-- Owner Info Card -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <h5 class="card-title mb-3">
+        <i class="bi bi-person-circle text-brand"></i> معلومات المالك
+      </h5>
+      <div class="row g-3">
+        <div class="col-md-3">
+          <div class="info-label">الاسم الكامل</div>
+          <div class="info-value">{{ owner.fullName }}</div>
+        </div>
+        <div class="col-md-3">
+          <div class="info-label">رقم الهوية</div>
+          <div class="info-value">{{ owner.nationalId || '-' }}</div>
+        </div>
+        <div class="col-md-3">
+          <div class="info-label">رقم الجوال</div>
+          <div class="info-value">{{ owner.phone }}</div>
+        </div>
+        <div class="col-md-3">
+          <div class="info-label">البريد الإلكتروني</div>
+          <div class="info-value">{{ owner.email || '-' }}</div>
+        </div>
+        <div class="col-md-3">
+          <div class="info-label">العنوان</div>
+          <div class="info-value">{{ owner.address || '-' }}</div>
+        </div>
+        <div class="col-md-3">
+          <div class="info-label">الحالة</div>
+          <div class="info-value">
+            <app-status-badge [status]="owner.status"></app-status-badge>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="info-label">حساب المستخدم</div>
+          <div class="info-value">{{ owner.hasAccount ? owner.username : 'لا يوجد' }}</div>
+        </div>
+        <div class="col-md-3" *ngIf="owner.notes">
+          <div class="info-label">ملاحظات</div>
+          <div class="info-value">{{ owner.notes }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Summary Stats -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-3 col-6">
+      <div class="stat-card card">
+        <div class="card-body text-center">
+          <div class="stat-icon"><i class="bi bi-buildings"></i></div>
+          <div class="stat-value">{{ totalBuildings }}</div>
+          <div class="stat-label">عدد المباني</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 col-6">
+      <div class="stat-card card">
+        <div class="card-body text-center">
+          <div class="stat-icon"><i class="bi bi-door-open"></i></div>
+          <div class="stat-value">{{ totalUnits }}</div>
+          <div class="stat-label">إجمالي الوحدات</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 col-6">
+      <div class="stat-card card text-success">
+        <div class="card-body text-center">
+          <div class="stat-icon"><i class="bi bi-check-circle"></i></div>
+          <div class="stat-value">{{ totalRented }}</div>
+          <div class="stat-label">وحدات مؤجرة</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 col-6">
+      <div class="stat-card card text-warning">
+        <div class="card-body text-center">
+          <div class="stat-icon"><i class="bi bi-house-door"></i></div>
+          <div class="stat-value">{{ totalAvailable }}</div>
+          <div class="stat-label">وحدات غير مؤجرة</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Buildings with Stats -->
+  <div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">
+        <i class="bi bi-buildings text-brand"></i> مباني المالك
+      </h5>
+    </div>
+    <div class="card-body">
+      <!-- No buildings -->
+      <div *ngIf="buildings.length === 0" class="text-center py-4 text-muted">
+        <i class="bi bi-building" style="font-size: 2rem;"></i>
+        <p class="mt-2">لا يوجد مباني مسجلة لهذا المالك</p>
+        <button class="btn btn-brand btn-sm" [routerLink]="['/app/buildings/new']">
+          <i class="bi bi-plus-lg"></i> إضافة مبنى
+        </button>
+      </div>
+
+      <!-- Buildings list -->
+      <div *ngIf="buildings.length > 0" class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead>
+            <tr>
+              <th>المبنى</th>
+              <th>العنوان</th>
+              <th>إجمالي الوحدات</th>
+              <th>مؤجرة</th>
+              <th>غير مؤجرة</th>
+              <th>الحالة</th>
+              <th>الإجراءات</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let building of buildings">
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <img *ngIf="building.imageUrl"
+                    [src]="building.imageUrl"
+                    alt="صورة المبنى"
+                    class="building-thumb rounded">
+                  <div *ngIf="!building.imageUrl" class="building-thumb-placeholder rounded">
+                    <i class="bi bi-building"></i>
+                  </div>
+                  <div class="fw-bold">{{ building.name }}</div>
+                </div>
+              </td>
+              <td>
+                <div>{{ building.address }}</div>
+                <small class="text-muted" *ngIf="building.city">{{ building.city }}</small>
+              </td>
+              <td>
+                <span class="badge bg-info fs-6">{{ building.units.length }}</span>
+              </td>
+              <td>
+                <span class="badge bg-success fs-6">{{ building.rentedCount }}</span>
+              </td>
+              <td>
+                <span class="badge bg-warning text-dark fs-6">{{ building.availableCount }}</span>
+              </td>
+              <td>
+                <app-status-badge [status]="building.status"></app-status-badge>
+              </td>
+              <td>
+                <button class="btn btn-sm btn-outline-brand"
+                  [routerLink]="['/app/buildings/edit', building.id]">
+                  <i class="bi bi-eye"></i> عرض
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

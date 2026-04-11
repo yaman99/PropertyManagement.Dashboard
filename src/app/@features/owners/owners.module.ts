@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, Routes } from '@angular/router';
 import { OwnersListComponent } from './owners-list/owners-list.component';
 import { OwnerFormComponent } from './owner-form/owner-form.component';
+import { OwnerDetailComponent } from './owner-detail/owner-detail.component';
 
 const routes: Routes = [
   {
@@ -12,6 +13,10 @@ const routes: Routes = [
   {
     path: 'new',
     component: OwnerFormComponent
+  },
+  {
+    path: ':id',
+    component: OwnerDetailComponent
   },
   {
     path: 'edit/:id',

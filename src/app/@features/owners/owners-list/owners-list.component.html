@@ -83,7 +83,9 @@
           <tbody>
             <tr *ngFor="let owner of owners">
               <td>
-                <div class="fw-bold">{{ owner.fullName }}</div>
+                <a class="fw-bold text-decoration-none" [routerLink]="[owner.id]" style="color: var(--brand-primary, #BC8545); cursor: pointer;">
+                  {{ owner.fullName }}
+                </a>
               </td>
               <td>{{ owner.nationalId }}</td>
               <td>{{ owner.phone }}</td>
@@ -96,6 +98,12 @@
               </td>
               <td>
                 <div class="btn-group btn-group-sm" role="group">
+                  <a
+                    class="btn btn-outline-brand"
+                    [routerLink]="[owner.id]"
+                    title="تفاصيل المالك">
+                    <i class="bi bi-eye"></i>
+                  </a>
                   <a
                     class="btn btn-action-view"
                     [routerLink]="['/app/accounting/statement/owner', owner.id]"
