@@ -35,8 +35,9 @@ export class InquiriesLocalStorageRepository implements InquiriesRepository {
     const newInquiry: Inquiry = {
       id: this.generateId(),
       ...dto,
+      isGeneral: dto.isGeneral ?? false,
       status: InquiryStatus.New,
-      source: InquirySource.Website,
+      source: (dto as any).source || InquirySource.Website,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };

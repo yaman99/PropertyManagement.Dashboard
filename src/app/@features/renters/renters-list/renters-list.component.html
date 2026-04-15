@@ -1,6 +1,6 @@
 <app-page-header
   title="إدارة المستأجرين"
-  icon="🔑"
+  icon="bi-people"
   [breadcrumbs]="[{label: 'المستأجرون'}]">
   <div actions>
     <button
@@ -23,14 +23,14 @@
           class="form-control"
           [(ngModel)]="searchTerm"
           (ngModelChange)="applyFilters()"
-          placeholder="ابحث بالاسم، البريد، الهاتف، أو الهوية...">
+          placeholder="ابحث بالاسم، الهاتف، أو رقم الوثيقة...">
       </div>
       <div class="col-md-4">
         <label class="form-label">الحالة</label>
-        <select class="form-select" [(ngModel)]="statusFilter" (ngModelChange)="applyFilters()">
+        <select class="form-select" [(ngModel)]="blacklistFilter" (ngModelChange)="applyFilters()">
           <option value="All">الكل</option>
-          <option [value]="RenterStatus.Active">نشط</option>
-          <option [value]="RenterStatus.Inactive">غير نشط</option>
+          <option value="Active">نشط</option>
+          <option value="Blacklisted">قائمة سوداء</option>
         </select>
       </div>
       <div class="col-md-2 d-flex align-items-end">
@@ -55,7 +55,7 @@
     <ng-container *ngIf="(filteredRenters$ | async) as renters">
       <div *ngIf="renters.length === 0">
         <app-empty-state
-          icon="🔑"
+          icon="bi-people"
           title="لا يوجد مستأجرون"
           message="لم يتم العثور على أي مستأجرين. ابدأ بإضافة مستأجر جديد">
           <button
@@ -72,25 +72,28 @@
           <thead>
             <tr>
               <th>الاسم الكامل</th>
-              <th>رقم الهوية</th>
+              <th>نوع الوثيقة</th>
+              <th>رقم الوثيقة</th>
               <th>الهاتف</th>
-              <th>البريد الإلكتروني</th>
+              <th>الجنسية</th>
               <th>جهة العمل</th>
               <th>الحالة</th>
               <th>الإجراءات</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let renter of renters">
+            <tr *ngFor="let renter of renters" [class.table-danger]="renter.isBlacklisted">
               <td>
                 <div class="fw-bold">{{ renter.fullName }}</div>
               </td>
+              <td>{{ getIdTypeLabel(renter.idType) }}</td>
               <td>{{ renter.nationalId || '-' }}</td>
               <td>{{ renter.phone }}</td>
-              <td>{{ renter.email || '-' }}</td>
+              <td>{{ renter.nationality || '-' }}</td>
               <td>{{ renter.employer || '-' }}</td>
               <td>
-                <app-status-badge [status]="renter.status"></app-status-badge>
+                <span *ngIf="renter.isBlacklisted" class="badge bg-danger">قائمة سوداء</span>
+                <span *ngIf="!renter.isBlacklisted" class="badge bg-success">نشط</span>
               </td>
               <td>
                 <div class="btn-group btn-group-sm" role="group">

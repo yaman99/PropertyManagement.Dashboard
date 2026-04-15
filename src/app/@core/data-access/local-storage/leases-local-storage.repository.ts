@@ -1,7 +1,10 @@
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Lease, CreateLeaseDto, UpdateLeaseDto, LeaseStatus, PaymentStatus, PaymentCycle, PaymentScheduleItem } from '../../domain/models';
+import {
+  Lease, CreateLeaseDto, UpdateLeaseDto, LeaseStatus,
+  generatePaymentSchedule, calculateEndDate, calculateCommission
+} from '../../domain/models';
 import { LeasesRepository } from '../interfaces';
 import { LocalStorageService } from './local-storage.service';
 
@@ -39,25 +42,46 @@ export class LeasesLocalStorageRepository implements LeasesRepository {
   create(dto: CreateLeaseDto): Observable<Lease> {
     const leases = this.storage.getItem<Lease[]>(this.STORAGE_KEY) || [];
 
-    // Generate payment schedule if not provided
-    const paymentSchedule = dto.paymentSchedule && dto.paymentSchedule.length > 0
-      ? dto.paymentSchedule
-      : this.generatePaymentSchedule(dto);
+    const startDate = new Date(dto.startDate);
+    const endDate = calculateEndDate(startDate, dto.contractDuration);
+    const rentalCommission = calculateCommission(
+      dto.totalContractValue,
+      dto.commissionPercentage,
+      dto.commissionDiscount || 0
+    );
+    const paymentSchedule = generatePaymentSchedule(
+      startDate,
+      dto.totalContractValue,
+      dto.paymentCycle,
+      dto.contractDuration
+    );
 
-    // Extract only CreateLeaseDto properties to avoid overwriting generated values
     const newLease: Lease = {
       id: this.generateId(),
+      buildingId: dto.buildingId,
       ownerId: dto.ownerId,
       renterId: dto.renterId,
       unitId: dto.unitId,
-      startDate: dto.startDate,
-      endDate: dto.endDate,
+      startDate,
+      endDate,
+      contractDuration: dto.contractDuration,
       paymentCycle: dto.paymentCycle,
-      rentAmount: dto.rentAmount,
+      totalContractValue: dto.totalContractValue,
       depositAmount: dto.depositAmount || 0,
-      dueDayOfMonth: dto.dueDayOfMonth || 1,
-      status: LeaseStatus.Active,
-      paymentSchedule: paymentSchedule,
+      commissionPercentage: dto.commissionPercentage,
+      rentalCommission,
+      commissionDiscount: dto.commissionDiscount || 0,
+      depositPaid: false,
+      commissionPaid: false,
+      inactiveReason: 'بانتظار دفع التأمين وعمولة التأجير',
+      status: LeaseStatus.Inactive,
+      paymentSchedule,
+      ownerManagerName: dto.ownerManagerName,
+      renterManagerName: dto.renterManagerName,
+      createdByUserId: dto.createdByUserId,
+      createdByUserName: dto.createdByUserName,
+      assignedToUserId: dto.assignedToUserId,
+      assignedToUserName: dto.assignedToUserName,
       renterAccountId: '',
       unitLedgerAccountId: '',
       createdAt: new Date(),
@@ -77,12 +101,27 @@ export class LeasesLocalStorageRepository implements LeasesRepository {
       throw new Error('Lease not found');
     }
 
-    leases[index] = {
+    const updated = {
       ...leases[index],
       ...dto,
       updatedAt: new Date()
     };
 
+    // Auto-activate if both deposit and commission are paid
+    if (updated.depositPaid && updated.commissionPaid && updated.status === LeaseStatus.Inactive) {
+      updated.status = LeaseStatus.Active;
+      updated.inactiveReason = undefined;
+    }
+
+    // Update inactive reason
+    if (updated.status === LeaseStatus.Inactive) {
+      const reasons: string[] = [];
+      if (!updated.depositPaid) reasons.push('لم يتم دفع التأمين');
+      if (!updated.commissionPaid) reasons.push('لم يتم دفع عمولة التأجير');
+      updated.inactiveReason = reasons.join(' و ');
+    }
+
+    leases[index] = updated;
     this.storage.setItem(this.STORAGE_KEY, leases);
     return of(leases[index]);
   }
@@ -96,37 +135,5 @@ export class LeasesLocalStorageRepository implements LeasesRepository {
 
   private generateId(): string {
     return `LSE${Date.now()}${Math.random().toString(36).substr(2, 9)}`;
-  }
-
-  private generatePaymentSchedule(dto: CreateLeaseDto): PaymentScheduleItem[] {
-    const schedule: PaymentScheduleItem[] = [];
-    const start = new Date(dto.startDate);
-    const end = new Date(dto.endDate);
-    const dueDay = dto.dueDayOfMonth || 1;
-
-    let monthsIncrement = 1;
-    switch (dto.paymentCycle) {
-      case PaymentCycle.Quarterly:
-        monthsIncrement = 3;
-        break;
-      case PaymentCycle.Yearly:
-        monthsIncrement = 12;
-        break;
-    }
-
-    let current = new Date(start);
-    current.setDate(dueDay);
-
-    while (current <= end) {
-      schedule.push({
-        dueDate: new Date(current),
-        amount: dto.rentAmount,
-        status: PaymentStatus.Pending
-      });
-
-      current.setMonth(current.getMonth() + monthsIncrement);
-    }
-
-    return schedule;
   }
 }

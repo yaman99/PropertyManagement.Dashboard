@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { State, Action, StateContext, Selector } from '@ngxs/store';
 import { tap, catchError, switchMap } from 'rxjs/operators';
 import { of } from 'rxjs';
-import { Renter } from '../domain/models/renter.model';
+import { Renter, CreateRenterDto } from '../domain/models/renter.model';
 import { RentersService } from '../application/services/renters.service';
 import { AccountingService } from '../application/services/accounting.service';
 
@@ -14,7 +14,7 @@ export namespace RentersActions {
 
   export class CreateRenter {
     static readonly type = '[Renters] Create Renter';
-    constructor(public payload: Renter) {}
+    constructor(public payload: CreateRenterDto) {}
   }
 
   export class UpdateRenter {
@@ -77,6 +77,16 @@ export class RentersState {
   static selectedRenter(state: RentersStateModel): Renter | null {
     if (!state.selectedRenterId) return null;
     return state.renters.find(r => r.id === state.selectedRenterId) || null;
+  }
+
+  @Selector()
+  static nonBlacklistedRenters(state: RentersStateModel): Renter[] {
+    return state.renters.filter(r => !r.isBlacklisted);
+  }
+
+  @Selector()
+  static blacklistedRenters(state: RentersStateModel): Renter[] {
+    return state.renters.filter(r => r.isBlacklisted);
   }
 
   @Action(RentersActions.LoadRenters)

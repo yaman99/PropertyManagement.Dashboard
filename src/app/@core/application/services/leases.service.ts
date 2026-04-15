@@ -1,7 +1,10 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, switchMap, throwError, forkJoin } from 'rxjs';
+import { Observable, switchMap, throwError } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Lease, CreateLeaseDto, UpdateLeaseDto, LeaseStatus, PaymentScheduleItem, PaymentStatus, PaymentCycle, UnitStatus } from '../../domain/models';
+import {
+  Lease, CreateLeaseDto, UpdateLeaseDto, LeaseStatus,
+  PaymentScheduleItem, PaymentStatus, UnitStatus
+} from '../../domain/models';
 import { LeasesRepository } from '../../data-access/interfaces';
 import { LeasesLocalStorageRepository } from '../../data-access/local-storage';
 import { UnitsService } from './units.service';
@@ -37,9 +40,11 @@ export class LeasesService {
     // Business rule: Check if unit already has an active lease
     return this.getByUnitId(dto.unitId).pipe(
       switchMap(leases => {
-        const hasActiveLease = leases.some(l => l.status === LeaseStatus.Active);
+        const hasActiveLease = leases.some(l =>
+          l.status === LeaseStatus.Active || l.status === LeaseStatus.Inactive
+        );
         if (hasActiveLease) {
-          return throwError(() => new Error('هذه الوحدة لديها عقد إيجار نشط بالفعل'));
+          return throwError(() => new Error('هذه الوحدة لديها عقد إيجار نشط أو قيد الانتظار بالفعل'));
         }
 
         return this.repository.create(dto);
@@ -56,66 +61,26 @@ export class LeasesService {
   }
 
   /**
-   * Generate payment schedule based on lease terms
-   */
-  generatePaymentSchedule(lease: Lease): PaymentScheduleItem[] {
-    const schedule: PaymentScheduleItem[] = [];
-    const startDate = new Date(lease.startDate);
-    const endDate = new Date(lease.endDate);
-    const dueDay = lease.dueDayOfMonth || 1;
-
-    let currentDate = new Date(startDate);
-    currentDate.setDate(dueDay);
-
-    while (currentDate <= endDate) {
-      const item: PaymentScheduleItem = {
-        dueDate: new Date(currentDate),
-        amount: lease.rentAmount,
-        status: PaymentStatus.Pending
-      };
-      schedule.push(item);
-
-      // Increment based on payment cycle
-      switch (lease.paymentCycle) {
-        case PaymentCycle.Monthly:
-          currentDate.setMonth(currentDate.getMonth() + 1);
-          break;
-        case PaymentCycle.Quarterly:
-          currentDate.setMonth(currentDate.getMonth() + 3);
-          break;
-        case PaymentCycle.Yearly:
-          currentDate.setFullYear(currentDate.getFullYear() + 1);
-          break;
-      }
-    }
-
-    return schedule;
-  }
-
-  /**
-   * Activate lease - updates unit status and generates schedule
+   * Activate lease - called when deposit and commission are both paid
+   * Updates unit status to Rented
    */
   activateLease(leaseId: string): Observable<Lease> {
     return this.getById(leaseId).pipe(
       switchMap(lease => {
         if (!lease) {
-          return throwError(() => new Error('Lease not found'));
+          return throwError(() => new Error('العقد غير موجود'));
         }
 
         if (lease.status === LeaseStatus.Active) {
           return throwError(() => new Error('العقد نشط بالفعل'));
         }
 
-        // Generate payment schedule
-        const schedule = this.generatePaymentSchedule(lease);
-
-        // Update lease status and schedule
         return this.update(leaseId, {
-          status: LeaseStatus.Active,
-          paymentSchedule: schedule
-        } as any).pipe(
+          depositPaid: true,
+          commissionPaid: true,
+          status: LeaseStatus.Active
+        }).pipe(
           switchMap(updatedLease => {
-            // Update unit status to Rented
             return this.unitsService.updateStatus(lease.unitId, UnitStatus.Rented).pipe(
               map(() => updatedLease)
             );
@@ -126,18 +91,31 @@ export class LeasesService {
   }
 
   /**
+   * Mark deposit as paid
+   */
+  markDepositPaid(leaseId: string): Observable<Lease> {
+    return this.update(leaseId, { depositPaid: true });
+  }
+
+  /**
+   * Mark commission as paid
+   */
+  markCommissionPaid(leaseId: string): Observable<Lease> {
+    return this.update(leaseId, { commissionPaid: true });
+  }
+
+  /**
    * End/cancel lease - update unit status back to available
    */
   endLease(leaseId: string, status: LeaseStatus.Expired | LeaseStatus.Cancelled): Observable<Lease> {
     return this.getById(leaseId).pipe(
       switchMap(lease => {
         if (!lease) {
-          return throwError(() => new Error('Lease not found'));
+          return throwError(() => new Error('العقد غير موجود'));
         }
 
         return this.update(leaseId, { status }).pipe(
           switchMap(updatedLease => {
-            // Update unit status to Available
             return this.unitsService.updateStatus(lease.unitId, UnitStatus.Available).pipe(
               map(() => updatedLease)
             );
@@ -153,6 +131,24 @@ export class LeasesService {
   getActiveLeases(): Observable<Lease[]> {
     return this.getAll().pipe(
       map(leases => leases.filter(l => l.status === LeaseStatus.Active))
+    );
+  }
+
+  /**
+   * Get leases with unpaid deposit
+   */
+  getLeasesWithUnpaidDeposit(): Observable<Lease[]> {
+    return this.getAll().pipe(
+      map(leases => leases.filter(l => !l.depositPaid && l.status !== LeaseStatus.Cancelled))
+    );
+  }
+
+  /**
+   * Get leases with unpaid commission
+   */
+  getLeasesWithUnpaidCommission(): Observable<Lease[]> {
+    return this.getAll().pipe(
+      map(leases => leases.filter(l => !l.commissionPaid && l.status !== LeaseStatus.Cancelled))
     );
   }
 

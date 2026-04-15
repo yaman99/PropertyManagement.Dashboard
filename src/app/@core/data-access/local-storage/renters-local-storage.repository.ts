@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Renter, CreateRenterDto, UpdateRenterDto, RenterStatus } from '../../domain/models';
+import { Renter, CreateRenterDto, UpdateRenterDto } from '../../domain/models';
 import { RentersRepository } from '../interfaces';
 import { LocalStorageService } from './local-storage.service';
 
@@ -30,7 +30,7 @@ export class RentersLocalStorageRepository implements RentersRepository {
     const newRenter: Renter = {
       id: this.generateId(),
       ...dto,
-      status: RenterStatus.Active,
+      isBlacklisted: false,
       role: 'Renter',
       username: dto.hasAccount ? this.generateUsername(dto.fullName) : undefined,
       tempPassword: dto.hasAccount ? this.generateTempPassword() : undefined,
@@ -73,8 +73,8 @@ export class RentersLocalStorageRepository implements RentersRepository {
     return this.getAll().pipe(
       map(renters => renters.filter(r =>
         r.fullName.toLowerCase().includes(query.toLowerCase()) ||
-        r.email.toLowerCase().includes(query.toLowerCase()) ||
-        r.phone.includes(query)
+        r.phone.includes(query) ||
+        (r.nationalId && r.nationalId.includes(query))
       ))
     );
   }

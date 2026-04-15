@@ -49,9 +49,15 @@ export class RentersService {
     return this.repository.search(query);
   }
 
-  getActiveRenters(): Observable<Renter[]> {
+  getNonBlacklistedRenters(): Observable<Renter[]> {
     return this.getAll().pipe(
-      map(renters => renters.filter(r => r.status === 'Active'))
+      map(renters => renters.filter(r => !r.isBlacklisted))
+    );
+  }
+
+  getBlacklistedRenters(): Observable<Renter[]> {
+    return this.getAll().pipe(
+      map(renters => renters.filter(r => r.isBlacklisted))
     );
   }
 }

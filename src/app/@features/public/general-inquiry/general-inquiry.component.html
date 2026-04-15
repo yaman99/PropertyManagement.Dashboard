@@ -1,0 +1,206 @@
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg" style="background-color: #1a1a2e;">
+  <div class="container">
+    <a class="navbar-brand text-white fw-bold" routerLink="/units">
+      <i class="bi bi-buildings me-2" style="color:#BC8545"></i>
+      نظام إدارة العقارات
+    </a>
+    <a class="btn btn-sm ms-auto" style="color:#BC8545;border-color:#BC8545;" routerLink="/units">
+      <i class="bi bi-arrow-right me-1"></i> عرض الوحدات المتاحة
+    </a>
+  </div>
+</nav>
+
+<div class="container py-5" dir="rtl">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+
+      <!-- Header -->
+      <div class="text-center mb-5">
+        <div class="mb-3">
+          <span class="badge px-4 py-2 fs-6" style="background-color:#BC8545;">
+            <i class="bi bi-search me-2"></i>طلب عقاري عام
+          </span>
+        </div>
+        <h2 class="fw-bold">لم تجد ما تبحث عنه؟</h2>
+        <p class="text-muted fs-5">
+          أخبرنا بما تحتاجه وسيتواصل معك فريقنا لمساعدتك في إيجاد العقار المناسب
+        </p>
+      </div>
+
+      <!-- Success Message -->
+      <div *ngIf="submitted" class="alert alert-success text-center py-4 mb-4">
+        <i class="bi bi-check-circle-fill fs-3 text-success mb-2 d-block"></i>
+        <h5>تم إرسال طلبك بنجاح!</h5>
+        <p class="mb-0">سيتواصل معك فريقنا في أقرب وقت ممكن على رقم الجوال المدخل.</p>
+      </div>
+
+      <!-- Inquiry Form -->
+      <div class="card shadow-sm">
+        <div class="card-header py-3" style="background-color:#BC8545;">
+          <h5 class="mb-0 text-white">
+            <i class="bi bi-pencil-square me-2"></i>
+            تفاصيل طلبك
+          </h5>
+        </div>
+        <div class="card-body p-4">
+          <form [formGroup]="inquiryForm" (ngSubmit)="onSubmit()">
+
+            <!-- Personal Info -->
+            <h6 class="mb-3 fw-bold" style="color:#BC8545;">
+              <i class="bi bi-person me-2"></i>المعلومات الشخصية
+            </h6>
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label class="form-label">الاسم الكامل <span class="text-danger">*</span></label>
+                <input
+                  type="text"
+                  class="form-control"
+                  formControlName="fullName"
+                  [class.is-invalid]="inquiryForm.get('fullName')?.invalid && inquiryForm.get('fullName')?.touched"
+                  placeholder="أدخل اسمك الكامل">
+                <div class="invalid-feedback">{{ getErrorMessage('fullName') }}</div>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">رقم الجوال <span class="text-danger">*</span></label>
+                <input
+                  type="tel"
+                  class="form-control"
+                  formControlName="phone"
+                  [class.is-invalid]="inquiryForm.get('phone')?.invalid && inquiryForm.get('phone')?.touched"
+                  placeholder="05xxxxxxxx"
+                  maxlength="10">
+                <div class="invalid-feedback">{{ getErrorMessage('phone') }}</div>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">الجنسية</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  formControlName="nationality"
+                  placeholder="مثال: سعودي، مصري...">
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">تاريخ الانتقال المتوقع</label>
+                <input
+                  type="date"
+                  class="form-control"
+                  formControlName="preferredMoveInDate">
+              </div>
+            </div>
+
+            <!-- Unit Requirements -->
+            <h6 class="mb-3 fw-bold" style="color:#BC8545;">
+              <i class="bi bi-house me-2"></i>متطلبات الوحدة
+            </h6>
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label class="form-label">نوع الوحدة <span class="text-danger">*</span></label>
+                <select
+                  class="form-select"
+                  formControlName="preferredUnitType"
+                  [class.is-invalid]="inquiryForm.get('preferredUnitType')?.invalid && inquiryForm.get('preferredUnitType')?.touched">
+                  <option value="">-- اختر نوع الوحدة --</option>
+                  <option *ngFor="let type of unitTypes" [value]="type.value">{{ type.label }}</option>
+                </select>
+                <div class="invalid-feedback">الرجاء اختيار نوع الوحدة</div>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">دورة الدفع المفضلة <span class="text-danger">*</span></label>
+                <select
+                  class="form-select"
+                  formControlName="preferredPaymentCycle"
+                  [class.is-invalid]="inquiryForm.get('preferredPaymentCycle')?.invalid && inquiryForm.get('preferredPaymentCycle')?.touched">
+                  <option value="">-- اختر دورة الدفع --</option>
+                  <option *ngFor="let cycle of paymentCycles" [value]="cycle.value">{{ cycle.label }}</option>
+                </select>
+                <div class="invalid-feedback">الرجاء اختيار دورة الدفع</div>
+              </div>
+
+              <div class="col-md-4">
+                <label class="form-label">عدد أفراد الأسرة</label>
+                <input
+                  type="number"
+                  class="form-control"
+                  formControlName="numberOfOccupants"
+                  min="1"
+                  max="20"
+                  placeholder="عدد الأفراد">
+              </div>
+
+              <div class="col-md-4">
+                <label class="form-label">عدد الغرف المطلوبة</label>
+                <input
+                  type="number"
+                  class="form-control"
+                  formControlName="numberOfRooms"
+                  min="1"
+                  placeholder="عدد الغرف">
+              </div>
+
+              <div class="col-md-4">
+                <label class="form-label">نطاق الميزانية (ر.س/سنة)</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  formControlName="budgetRange"
+                  placeholder="مثال: 20,000 - 30,000">
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">الحي / المنطقة المفضلة</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  formControlName="preferredDistrict"
+                  placeholder="مثال: حي النزهة، حي الربوة...">
+              </div>
+            </div>
+
+            <!-- Message -->
+            <h6 class="mb-3 fw-bold" style="color:#BC8545;">
+              <i class="bi bi-chat-text me-2"></i>تفاصيل إضافية
+            </h6>
+            <div class="mb-4">
+              <label class="form-label">اشرح ما تحتاجه <span class="text-danger">*</span></label>
+              <textarea
+                class="form-control"
+                formControlName="message"
+                rows="4"
+                [class.is-invalid]="inquiryForm.get('message')?.invalid && inquiryForm.get('message')?.touched"
+                placeholder="اكتب تفاصيل إضافية عن متطلباتك، مواصفات الوحدة، أو أي معلومات تساعدنا في خدمتك..."></textarea>
+              <div class="invalid-feedback">{{ getErrorMessage('message') }}</div>
+            </div>
+
+            <!-- Submit -->
+            <div class="d-grid">
+              <button
+                type="submit"
+                class="btn btn-lg py-3"
+                style="background-color:#BC8545;color:white;"
+                [disabled]="submitting">
+                <span *ngIf="submitting" class="spinner-border spinner-border-sm me-2"></span>
+                <i *ngIf="!submitting" class="bi bi-send me-2"></i>
+                {{ submitting ? 'جاري الإرسال...' : 'إرسال الطلب' }}
+              </button>
+            </div>
+
+          </form>
+        </div>
+      </div>
+
+      <!-- Back to units -->
+      <div class="text-center mt-4">
+        <a routerLink="/units" class="text-muted text-decoration-none">
+          <i class="bi bi-arrow-right me-1"></i>
+          العودة لعرض الوحدات المتاحة
+        </a>
+      </div>
+
+    </div>
+  </div>
+</div>

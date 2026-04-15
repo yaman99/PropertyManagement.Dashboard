@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { State, Action, StateContext, Selector } from '@ngxs/store';
 import { tap, catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
-import { Lease } from '../domain/models/lease.model';
+import { Lease, CreateLeaseDto, UpdateLeaseDto, LeaseStatus, WarningType, applyWarningToScheduleItem } from '../domain/models/lease.model';
 import { LeasesService } from '../application/services/leases.service';
 
 // Actions
@@ -13,12 +13,12 @@ export namespace LeasesActions {
 
   export class CreateLease {
     static readonly type = '[Leases] Create Lease';
-    constructor(public payload: Lease) {}
+    constructor(public payload: CreateLeaseDto) {}
   }
 
   export class UpdateLease {
     static readonly type = '[Leases] Update Lease';
-    constructor(public id: string, public payload: Partial<Lease>) {}
+    constructor(public id: string, public payload: UpdateLeaseDto) {}
   }
 
   export class DeleteLease {
@@ -28,6 +28,16 @@ export namespace LeasesActions {
 
   export class ActivateLease {
     static readonly type = '[Leases] Activate Lease';
+    constructor(public id: string) {}
+  }
+
+  export class MarkDepositPaid {
+    static readonly type = '[Leases] Mark Deposit Paid';
+    constructor(public id: string) {}
+  }
+
+  export class MarkCommissionPaid {
+    static readonly type = '[Leases] Mark Commission Paid';
     constructor(public id: string) {}
   }
 
@@ -44,6 +54,15 @@ export namespace LeasesActions {
   export class SelectLease {
     static readonly type = '[Leases] Select Lease';
     constructor(public id: string | null) {}
+  }
+
+  export class SendPaymentWarning {
+    static readonly type = '[Leases] Send Payment Warning';
+    constructor(
+      public leaseId: string,
+      public paymentIndex: number,
+      public warningType: WarningType
+    ) {}
   }
 }
 
@@ -92,7 +111,22 @@ export class LeasesState {
 
   @Selector()
   static activeLeases(state: LeasesStateModel): Lease[] {
-    return state.leases.filter(l => l.status === 'Active');
+    return state.leases.filter(l => l.status === LeaseStatus.Active);
+  }
+
+  @Selector()
+  static inactiveLeases(state: LeasesStateModel): Lease[] {
+    return state.leases.filter(l => l.status === LeaseStatus.Inactive);
+  }
+
+  @Selector()
+  static unpaidDepositLeases(state: LeasesStateModel): Lease[] {
+    return state.leases.filter(l => !l.depositPaid && l.status !== LeaseStatus.Cancelled);
+  }
+
+  @Selector()
+  static unpaidCommissionLeases(state: LeasesStateModel): Lease[] {
+    return state.leases.filter(l => !l.commissionPaid && l.status !== LeaseStatus.Cancelled);
   }
 
   @Action(LeasesActions.LoadLeases)
@@ -188,11 +222,53 @@ export class LeasesState {
     );
   }
 
+  @Action(LeasesActions.MarkDepositPaid)
+  markDepositPaid(ctx: StateContext<LeasesStateModel>, action: LeasesActions.MarkDepositPaid) {
+    ctx.patchState({ loading: true, error: null });
+
+    return this.leasesService.markDepositPaid(action.id).pipe(
+      tap(updatedLease => {
+        if (updatedLease) {
+          const state = ctx.getState();
+          const leases = state.leases.map(l =>
+            l.id === action.id ? updatedLease : l
+          );
+          ctx.patchState({ leases, loading: false });
+        }
+      }),
+      catchError(error => {
+        ctx.patchState({ error: error.message, loading: false });
+        return of(null);
+      })
+    );
+  }
+
+  @Action(LeasesActions.MarkCommissionPaid)
+  markCommissionPaid(ctx: StateContext<LeasesStateModel>, action: LeasesActions.MarkCommissionPaid) {
+    ctx.patchState({ loading: true, error: null });
+
+    return this.leasesService.markCommissionPaid(action.id).pipe(
+      tap(updatedLease => {
+        if (updatedLease) {
+          const state = ctx.getState();
+          const leases = state.leases.map(l =>
+            l.id === action.id ? updatedLease : l
+          );
+          ctx.patchState({ leases, loading: false });
+        }
+      }),
+      catchError(error => {
+        ctx.patchState({ error: error.message, loading: false });
+        return of(null);
+      })
+    );
+  }
+
   @Action(LeasesActions.TerminateLease)
   terminateLease(ctx: StateContext<LeasesStateModel>, action: LeasesActions.TerminateLease) {
     ctx.patchState({ loading: true, error: null });
 
-    return this.leasesService.update(action.id, { status: 'Terminated' as any }).pipe(
+    return this.leasesService.endLease(action.id, LeaseStatus.Cancelled).pipe(
       tap(terminatedLease => {
         if (terminatedLease) {
           const state = ctx.getState();
@@ -213,7 +289,6 @@ export class LeasesState {
   recordPayment(ctx: StateContext<LeasesStateModel>, action: LeasesActions.RecordPayment) {
     ctx.patchState({ loading: true, error: null });
 
-    // Record payment - update payment schedule item
     const state = ctx.getState();
     const lease = state.leases.find(l => l.id === action.leaseId);
 
@@ -233,6 +308,39 @@ export class LeasesState {
 
     ctx.patchState({ loading: false });
     return of(null);
+  }
+
+  @Action(LeasesActions.SendPaymentWarning)
+  sendPaymentWarning(ctx: StateContext<LeasesStateModel>, action: LeasesActions.SendPaymentWarning) {
+    const state = ctx.getState();
+    const lease = state.leases.find(l => l.id === action.leaseId);
+
+    if (!lease) return of(null);
+
+    const updatedSchedule = lease.paymentSchedule.map((item, index) =>
+      index === action.paymentIndex
+        ? applyWarningToScheduleItem(item, action.warningType)
+        : item
+    );
+
+    const updatedLease: Lease = { ...lease, paymentSchedule: updatedSchedule, updatedAt: new Date() };
+
+    return this.leasesService.update(action.leaseId, { paymentSchedule: updatedSchedule }).pipe(
+      tap(result => {
+        if (result) {
+          const leases = state.leases.map(l => l.id === action.leaseId ? result : l);
+          ctx.patchState({ leases });
+        } else {
+          // Optimistic update if service returns null
+          const leases = state.leases.map(l => l.id === action.leaseId ? updatedLease : l);
+          ctx.patchState({ leases });
+        }
+      }),
+      catchError(error => {
+        ctx.patchState({ error: error.message });
+        return of(null);
+      })
+    );
   }
 
   @Action(LeasesActions.SelectLease)

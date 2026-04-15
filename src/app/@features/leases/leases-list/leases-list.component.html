@@ -1,6 +1,6 @@
 <app-page-header
   title="إدارة العقود"
-  icon="📄"
+  icon="bi-file-earmark-text"
   [breadcrumbs]="[{label: 'العقود'}]">
   <div actions>
     <button
@@ -20,10 +20,18 @@
         <label class="form-label">حالة العقد</label>
         <select class="form-select" [(ngModel)]="statusFilter" (ngModelChange)="applyFilters()">
           <option value="All">الكل</option>
-          <option [value]="LeaseStatus.Draft">مسودة</option>
+          <option [value]="LeaseStatus.Inactive">غير نشط</option>
           <option [value]="LeaseStatus.Active">نشط</option>
           <option [value]="LeaseStatus.Expired">منتهي</option>
           <option [value]="LeaseStatus.Cancelled">ملغي</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">المدفوعات</label>
+        <select class="form-select" [(ngModel)]="paymentFilter" (ngModelChange)="applyFilters()">
+          <option value="All">الكل</option>
+          <option value="UnpaidDeposit">لم يدفع التأمين</option>
+          <option value="UnpaidCommission">لم يدفع العمولة</option>
         </select>
       </div>
       <div class="col-md-2 d-flex align-items-end">
@@ -48,7 +56,7 @@
     <ng-container *ngIf="(filteredLeases$ | async) as leases">
       <div *ngIf="leases.length === 0">
         <app-empty-state
-          icon="📄"
+          icon="bi-file-earmark-text"
           title="لا توجد عقود"
           message="لم يتم العثور على أي عقود. ابدأ بإنشاء عقد جديد">
           <button
@@ -69,14 +77,14 @@
               <th>تاريخ البداية</th>
               <th>تاريخ النهاية</th>
               <th>دورة الدفع</th>
-              <th>قيمة الإيجار</th>
+              <th>قيمة العقد</th>
               <th>التحصيل</th>
               <th>الحالة</th>
               <th>الإجراءات</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let lease of leases">
+            <tr *ngFor="let lease of leases" [class.table-warning]="lease.status === 'Inactive'">
               <td>
                 <span class="fw-bold">{{ getUnitCode(lease.unitId) | async }}</span>
               </td>
@@ -88,7 +96,7 @@
               </td>
               <td>
                 <span class="text-brand fw-bold">
-                  {{ lease.rentAmount | number }} ر.س
+                  {{ lease.totalContractValue | number }} ر.س
                 </span>
               </td>
               <td>
@@ -105,6 +113,12 @@
               </td>
               <td>
                 <app-status-badge [status]="lease.status"></app-status-badge>
+                <small class="d-block text-danger" *ngIf="!lease.depositPaid && lease.status !== 'Cancelled'">
+                  <i class="bi bi-exclamation-circle"></i> تأمين
+                </small>
+                <small class="d-block text-danger" *ngIf="!lease.commissionPaid && lease.status !== 'Cancelled'">
+                  <i class="bi bi-exclamation-circle"></i> عمولة
+                </small>
               </td>
               <td>
                 <div class="btn-group btn-group-sm" role="group">

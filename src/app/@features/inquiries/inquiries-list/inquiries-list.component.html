@@ -1,6 +1,6 @@
 <app-page-header
   title="استفسارات العملاء"
-  icon="📨"
+  icon="bi-chat-dots"
   [breadcrumbs]="[{label: 'الاستفسارات'}]"
   [showActions]="false">
 </app-page-header>
@@ -9,17 +9,20 @@
 <div class="card mb-4" dir="rtl">
   <div class="card-body">
     <div class="row g-3">
-      <div class="col-md-6">
+      <!-- Search -->
+      <div class="col-md-4">
         <label class="form-label">البحث</label>
         <input
           type="text"
           class="form-control"
           [(ngModel)]="searchTerm"
-          placeholder="ابحث بالاسم، البريد الإلكتروني، أو رقم الهاتف...">
+          (ngModelChange)="applyFilters()"
+          placeholder="ابحث بالاسم أو الهاتف...">
       </div>
-      <div class="col-md-3">
-        <label class="form-label">حالة الاستفسار</label>
-        <select class="form-select" [(ngModel)]="statusFilter">
+      <!-- Status -->
+      <div class="col-md-2">
+        <label class="form-label">الحالة</label>
+        <select class="form-select" [(ngModel)]="statusFilter" (ngModelChange)="applyFilters()">
           <option value="All">الكل</option>
           <option [value]="InquiryStatus.New">جديد</option>
           <option [value]="InquiryStatus.Contacted">تم التواصل</option>
@@ -28,6 +31,37 @@
           <option [value]="InquiryStatus.Converted">تم التحويل</option>
         </select>
       </div>
+      <!-- Type -->
+      <div class="col-md-2">
+        <label class="form-label">نوع الطلب</label>
+        <select class="form-select" [(ngModel)]="typeFilter" (ngModelChange)="applyFilters()">
+          <option value="All">الكل</option>
+          <option value="General">طلب عام</option>
+          <option value="UnitSpecific">وحدة محددة</option>
+        </select>
+      </div>
+      <!-- Payment Cycle -->
+      <div class="col-md-2">
+        <label class="form-label">دورة الدفع</label>
+        <select class="form-select" [(ngModel)]="paymentCycleFilter" (ngModelChange)="applyFilters()">
+          <option *ngFor="let c of paymentCycles" [value]="c.value">{{ c.label }}</option>
+        </select>
+      </div>
+      <!-- Family Count -->
+      <div class="col-md-2">
+        <label class="form-label">عدد الأفراد</label>
+        <select class="form-select" [(ngModel)]="familyCountFilter" (ngModelChange)="applyFilters()">
+          <option value="All">الكل</option>
+          <option value="1">فرد واحد</option>
+          <option value="2-4">2-4 أفراد</option>
+          <option value="5+">5 أفراد فأكثر</option>
+        </select>
+      </div>
+    </div>
+    <div class="mt-2">
+      <button class="btn btn-sm btn-outline-secondary" (click)="clearFilters()">
+        <i class="bi bi-x-circle me-1"></i> مسح الفلاتر
+      </button>
     </div>
   </div>
 </div>
@@ -41,44 +75,74 @@
 
 <!-- Inquiries Table -->
 <div *ngIf="!(loading$ | async)" class="card" dir="rtl">
-  <div class="card-body">
-    <ng-container *ngIf="(inquiries$ | async) as inquiries">
-      <div *ngIf="inquiries.length === 0">
+  <div class="card-body p-0">
+    <ng-container *ngIf="(filteredInquiries$ | async) as inquiries">
+      <div *ngIf="inquiries.length === 0" class="p-4">
         <app-empty-state
-          icon="📨"
+          icon="bi-chat-dots"
           title="لا توجد استفسارات"
-          message="لم يتم استلام أي استفسارات من العملاء بعد">
+          message="لم يتم العثور على أي استفسارات بهذه الفلاتر">
         </app-empty-state>
       </div>
 
       <div *ngIf="inquiries.length > 0" class="table-responsive">
-        <table class="table table-hover">
+        <table class="table table-hover mb-0">
           <thead>
             <tr>
               <th>التاريخ</th>
               <th>العميل</th>
-              <th>الوحدة</th>
-              <th>البريد الإلكتروني</th>
-              <th>الهاتف</th>
+              <th>نوع الطلب</th>
+              <th>دورة الدفع</th>
+              <th>الأفراد</th>
               <th>الحالة</th>
               <th>الإجراءات</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let inquiry of inquiries">
+            <tr *ngFor="let inquiry of inquiries"
+                [class.table-info]="inquiry.isGeneral">
+              <!-- Date -->
               <td>
-                <div>{{ inquiry.createdAt | date:'dd/MM/yyyy' }}</div>
+                <div class="small">{{ inquiry.createdAt | date:'dd/MM/yyyy' }}</div>
                 <small class="text-muted">{{ inquiry.createdAt | date:'HH:mm' }}</small>
               </td>
+              <!-- Customer -->
               <td>
                 <div class="fw-bold">{{ inquiry.fullName }}</div>
-                <small class="text-muted" *ngIf="inquiry.nationality">{{ inquiry.nationality }}</small>
+                <div class="small text-muted">{{ inquiry.phone }}</div>
+                <div class="small text-muted" *ngIf="inquiry.nationality">{{ inquiry.nationality }}</div>
               </td>
+              <!-- Type -->
               <td>
-                <span class="badge bg-secondary">{{ inquiry.unitCode || inquiry.unitId }}</span>
+                <span *ngIf="inquiry.isGeneral" class="badge bg-info">
+                  <i class="bi bi-search me-1"></i> طلب عام
+                </span>
+                <span *ngIf="!inquiry.isGeneral" class="badge bg-secondary">
+                  <i class="bi bi-building me-1"></i>
+                  {{ inquiry.unitCode || 'وحدة محددة' }}
+                </span>
+                <!-- General inquiry details -->
+                <div *ngIf="inquiry.isGeneral && inquiry.preferredUnitType" class="small text-muted mt-1">
+                  {{ getUnitTypeLabel(inquiry.preferredUnitType) }}
+                  <span *ngIf="inquiry.budgetRange"> — {{ inquiry.budgetRange }} ر.س</span>
+                </div>
               </td>
-              <td>{{ inquiry.email }}</td>
-              <td>{{ inquiry.phone }}</td>
+              <!-- Payment Cycle -->
+              <td>
+                <span *ngIf="inquiry.preferredPaymentCycle" class="badge bg-light text-dark border">
+                  {{ getPaymentCycleLabel(inquiry.preferredPaymentCycle) }}
+                </span>
+                <span *ngIf="!inquiry.preferredPaymentCycle" class="text-muted">—</span>
+              </td>
+              <!-- Family Count -->
+              <td>
+                <span *ngIf="inquiry.numberOfOccupants">
+                  <i class="bi bi-people me-1"></i>
+                  {{ inquiry.numberOfOccupants }}
+                </span>
+                <span *ngIf="!inquiry.numberOfOccupants" class="text-muted">—</span>
+              </td>
+              <!-- Status -->
               <td>
                 <select
                   class="form-select form-select-sm"
@@ -91,6 +155,7 @@
                   <option [value]="InquiryStatus.Converted">تم التحويل</option>
                 </select>
               </td>
+              <!-- Actions -->
               <td>
                 <div class="btn-group btn-group-sm" role="group">
                   <a

@@ -1,0 +1,162 @@
+<app-page-header
+  title="إدارة المستخدمين"
+  icon="bi-people-fill"
+  [breadcrumbs]="[
+    {label: 'الإدارة'},
+    {label: 'المستخدمون'}
+  ]"
+  [showActions]="false">
+</app-page-header>
+
+<!-- Summary Cards -->
+<div class="row g-3 mb-4" dir="rtl">
+  <div class="col-6 col-md-3">
+    <div class="card text-center">
+      <div class="card-body py-3">
+        <div class="fs-3 fw-bold text-danger">{{ totalAdmins }}</div>
+        <div class="text-muted small">مدير النظام</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card text-center">
+      <div class="card-body py-3">
+        <div class="fs-3 fw-bold text-info">{{ totalAccountants }}</div>
+        <div class="text-muted small">محاسب</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card text-center">
+      <div class="card-body py-3">
+        <div class="fs-3 fw-bold text-brand">{{ totalOwnerUsers }}</div>
+        <div class="text-muted small">حسابات الملاك</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card text-center">
+      <div class="card-body py-3">
+        <div class="fs-3 fw-bold text-success">{{ totalRenterUsers }}</div>
+        <div class="text-muted small">حسابات المستأجرين</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4" dir="rtl">
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-md-5">
+        <label class="form-label">بحث</label>
+        <input
+          type="text"
+          class="form-control"
+          [(ngModel)]="searchTerm"
+          (ngModelChange)="applyFilters()"
+          placeholder="ابحث باسم المستخدم...">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">الدور</label>
+        <select class="form-select" [(ngModel)]="roleFilter" (ngModelChange)="applyFilters()">
+          <option *ngFor="let r of roles" [value]="r.value">{{ r.label }}</option>
+        </select>
+      </div>
+      <div class="col-md-3 d-flex align-items-end">
+        <button class="btn btn-outline-secondary w-100" (click)="clearFilters()">مسح الفلاتر</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Loading -->
+<div *ngIf="loading" class="text-center py-5">
+  <div class="spinner-border text-brand" role="status">
+    <span class="visually-hidden">جاري التحميل...</span>
+  </div>
+</div>
+
+<!-- Users List -->
+<div *ngIf="!loading" class="card" dir="rtl">
+  <div class="card-body p-0">
+    <app-empty-state
+      *ngIf="filteredUsers.length === 0"
+      icon="bi-people"
+      title="لا يوجد مستخدمون"
+      message="لم يتم العثور على مستخدمين بهذه الفلاتر">
+    </app-empty-state>
+
+    <div *ngIf="filteredUsers.length > 0" class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>اسم المستخدم</th>
+            <th>الدور</th>
+            <th>مرتبط بـ</th>
+            <th>المتابعة</th>
+            <th>آخر دخول</th>
+            <th>الحالة</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let user of filteredUsers" [class.opacity-50]="!user.isActive">
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <div class="avatar-circle bg-brand text-white">
+                  {{ user.username.charAt(0).toUpperCase() }}
+                </div>
+                <div>
+                  <div class="fw-bold">{{ user.username }}</div>
+                  <small class="text-muted">{{ user.id }}</small>
+                </div>
+              </div>
+            </td>
+            <td>
+              <span class="badge" [ngClass]="getRoleBadgeClass(user.role)">
+                {{ getRoleLabel(user.role) }}
+              </span>
+            </td>
+            <td>
+              <!-- Owner link -->
+              <div *ngIf="user.linkedOwner" class="d-flex align-items-center gap-1">
+                <i class="bi bi-house text-brand"></i>
+                <span class="small">{{ user.linkedOwner.fullName }}</span>
+                <span class="badge bg-light text-dark border">مالك</span>
+              </div>
+              <!-- Renter link -->
+              <div *ngIf="user.linkedRenter" class="d-flex align-items-center gap-1">
+                <i class="bi bi-person text-success"></i>
+                <span class="small">{{ user.linkedRenter.fullName }}</span>
+                <span class="badge bg-light text-dark border">مستأجر</span>
+              </div>
+              <span *ngIf="!user.linkedOwner && !user.linkedRenter" class="text-muted">—</span>
+            </td>
+            <!-- Tracking: how many owners/renters this user follows -->
+            <td>
+              <div class="d-flex gap-2">
+                <div class="text-center" *ngIf="user.managedOwnersCount > 0">
+                  <div class="badge bg-brand fs-6">{{ user.managedOwnersCount }}</div>
+                  <div class="small text-muted">مالك</div>
+                </div>
+                <div class="text-center" *ngIf="user.managedRentersCount > 0">
+                  <div class="badge bg-success fs-6">{{ user.managedRentersCount }}</div>
+                  <div class="small text-muted">مستأجر</div>
+                </div>
+                <span *ngIf="user.managedOwnersCount === 0 && user.managedRentersCount === 0" class="text-muted small">
+                  لا يوجد
+                </span>
+              </div>
+            </td>
+            <td>{{ formatDate(user.lastLogin) }}</td>
+            <td>
+              <span class="badge" [ngClass]="user.isActive ? 'bg-success' : 'bg-secondary'">
+                {{ user.isActive ? 'نشط' : 'موقوف' }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

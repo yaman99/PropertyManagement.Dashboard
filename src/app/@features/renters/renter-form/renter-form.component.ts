@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { Store } from '@ngxs/store';
-import { Renter, RenterStatus } from '../../../@core/domain/models/renter.model';
+import { Renter, RenterIdType, MaritalStatus, CreateRenterDto } from '../../../@core/domain/models/renter.model';
 import { RentersActions, RentersState } from '../../../@core/state/renters.state';
 import { PageHeaderComponent } from '../../../@shared/components/page-header/page-header.component';
 import { AlertService } from '../../../@shared/services/alert.service';
@@ -25,7 +25,16 @@ export class RenterFormComponent implements OnInit {
   renterId: string | null = null;
   loading = false;
 
-  renterStatuses = Object.values(RenterStatus);
+  idTypes = [
+    { value: RenterIdType.Identity, label: 'هوية وطنية' },
+    { value: RenterIdType.Residency, label: 'إقامة' },
+    { value: RenterIdType.CommercialRecord, label: 'سجل تجاري' }
+  ];
+
+  maritalStatuses = [
+    { value: MaritalStatus.Single, label: 'أعزب' },
+    { value: MaritalStatus.Married, label: 'متزوج' }
+  ];
 
   constructor(
     private fb: FormBuilder,
@@ -36,16 +45,32 @@ export class RenterFormComponent implements OnInit {
   ) {
     this.renterForm = this.fb.group({
       fullName: ['', [Validators.required, Validators.minLength(3)]],
-      nationalId: ['', [Validators.pattern(/^\d{10}$/)]],
       phone: ['', [Validators.required, Validators.pattern(/^05\d{8}$/)]],
-      email: ['', [Validators.email]],
-      address: [''],
+      idType: [RenterIdType.Identity, Validators.required],
+      nationalId: ['', [Validators.pattern(/^\d{10}$/)]],
+      nationality: [''],
+      birthDate: [''],
+      maritalStatus: [null],
+      familyMemberCount: [null],
       employer: [''],
       emergencyContact: [''],
       emergencyPhone: ['', [Validators.pattern(/^05\d{8}$/)]],
-      status: [RenterStatus.Active, Validators.required],
       notes: ['']
     });
+
+    // Listen to maritalStatus changes to show/hide familyMemberCount
+    this.renterForm.get('maritalStatus')?.valueChanges.subscribe(status => {
+      if (status === MaritalStatus.Married) {
+        this.renterForm.get('familyMemberCount')?.enable();
+      } else {
+        this.renterForm.get('familyMemberCount')?.setValue(null);
+        this.renterForm.get('familyMemberCount')?.disable();
+      }
+    });
+  }
+
+  get isMarried(): boolean {
+    return this.renterForm.get('maritalStatus')?.value === MaritalStatus.Married;
   }
 
   ngOnInit() {
@@ -61,7 +86,14 @@ export class RenterFormComponent implements OnInit {
     const renter = this.store.selectSnapshot(RentersState.renters).find(r => r.id === id);
 
     if (renter) {
-      this.renterForm.patchValue(renter);
+      this.renterForm.patchValue({
+        ...renter,
+        birthDate: renter.birthDate ? this.formatDate(renter.birthDate) : ''
+      });
+      // Trigger maritalStatus change to enable/disable familyMemberCount
+      if (renter.maritalStatus === MaritalStatus.Married) {
+        this.renterForm.get('familyMemberCount')?.enable();
+      }
     } else {
       this.alertService.toastError('لم يتم العثور على المستأجر');
       this.router.navigate(['/app/renters']);
@@ -76,14 +108,16 @@ export class RenterFormComponent implements OnInit {
     }
 
     this.loading = true;
-    const renterData: Renter = {
-      ...this.renterForm.value,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
+    const formValue = this.renterForm.getRawValue();
 
     if (this.isEditMode && this.renterId) {
-      this.store.dispatch(new RentersActions.UpdateRenter(this.renterId, renterData))
+      const updateData = {
+        ...formValue,
+        birthDate: formValue.birthDate ? new Date(formValue.birthDate) : undefined,
+        familyMemberCount: this.isMarried ? formValue.familyMemberCount : undefined
+      };
+
+      this.store.dispatch(new RentersActions.UpdateRenter(this.renterId, updateData))
         .subscribe({
           next: () => {
             this.alertService.toastSuccess('تم تحديث بيانات المستأجر بنجاح');
@@ -95,14 +129,19 @@ export class RenterFormComponent implements OnInit {
           }
         });
     } else {
-      this.store.dispatch(new RentersActions.CreateRenter(renterData))
+      const createData: CreateRenterDto = {
+        ...formValue,
+        birthDate: formValue.birthDate ? new Date(formValue.birthDate) : undefined,
+        familyMemberCount: this.isMarried ? formValue.familyMemberCount : undefined,
+        hasAccount: true
+      };
+
+      this.store.dispatch(new RentersActions.CreateRenter(createData))
         .subscribe({
           next: () => {
-            // Get the created renter
             const renters = this.store.selectSnapshot(RentersState.renters);
             const createdRenter = renters[renters.length - 1];
 
-            // Show credentials if account was created
             if (createdRenter.hasAccount && createdRenter.tempPassword) {
               this.alertService.showCredentialsModal(
                 createdRenter.username || '',
@@ -140,10 +179,12 @@ export class RenterFormComponent implements OnInit {
       if (fieldName === 'nationalId') return 'رقم الهوية يجب أن يكون 10 أرقام';
       if (fieldName === 'phone' || fieldName === 'emergencyPhone') return 'رقم الهاتف يجب أن يبدأ بـ 05 ويتكون من 10 أرقام';
     }
-    if (control?.hasError('email')) {
-      return 'البريد الإلكتروني غير صحيح';
-    }
 
     return '';
+  }
+
+  private formatDate(date: Date): string {
+    const d = new Date(date);
+    return d.toISOString().split('T')[0];
   }
 }

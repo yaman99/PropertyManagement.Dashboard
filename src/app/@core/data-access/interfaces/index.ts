@@ -9,3 +9,4 @@ export * from './leases.repository';
 export * from './requests.repository';
 export * from './accounting.repository';
 export * from './auth.repository';
+export * from './delegations.repository';

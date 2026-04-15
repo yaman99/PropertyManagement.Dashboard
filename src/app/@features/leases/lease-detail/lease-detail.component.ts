@@ -4,7 +4,10 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Store } from '@ngxs/store';
 import { Observable, combineLatest, map } from 'rxjs';
-import { Lease, LeaseStatus, PaymentCycle, PaymentStatus, PaymentScheduleItem } from '../../../@core/domain/models/lease.model';
+import {
+  Lease, LeaseStatus, PaymentCycle, PaymentStatus, PaymentScheduleItem,
+  WarningType, getPaymentWarningStatus
+} from '../../../@core/domain/models/lease.model';
 import { Unit } from '../../../@core/domain/models/unit.model';
 import { Renter } from '../../../@core/domain/models/renter.model';
 import { Owner } from '../../../@core/domain/models/owner.model';
@@ -65,6 +68,8 @@ export class LeaseDetailComponent implements OnInit {
   Permission = Permission;
   LeaseStatus = LeaseStatus;
   PaymentStatus = PaymentStatus;
+  WarningType = WarningType;
+  getPaymentWarningStatus = getPaymentWarningStatus;
 
   constructor(
     private store: Store,
@@ -124,9 +129,34 @@ export class LeaseDetailComponent implements OnInit {
     const labels: Record<string, string> = {
       'Monthly': 'شهري',
       'Quarterly': 'ربع سنوي',
-      'Yearly': 'سنوي'
+      'SemiAnnual': 'كل 6 أشهر',
+      'Annual': 'سنوي'
     };
     return labels[cycle] || cycle;
+  }
+
+  markDepositPaid() {
+    if (!this.lease) return;
+    this.store.dispatch(new LeasesActions.MarkDepositPaid(this.lease.id))
+      .subscribe({
+        next: () => {
+          this.alertService.toastSuccess('تم تأكيد دفع التأمين');
+          this.loadLeaseDetails(this.lease!.id);
+        },
+        error: () => this.alertService.toastError('فشل تأكيد الدفع')
+      });
+  }
+
+  markCommissionPaid() {
+    if (!this.lease) return;
+    this.store.dispatch(new LeasesActions.MarkCommissionPaid(this.lease.id))
+      .subscribe({
+        next: () => {
+          this.alertService.toastSuccess('تم تأكيد دفع العمولة');
+          this.loadLeaseDetails(this.lease!.id);
+        },
+        error: () => this.alertService.toastError('فشل تأكيد الدفع')
+      });
   }
 
   getPaymentStatusLabel(status: PaymentStatus): string {
@@ -293,6 +323,79 @@ export class LeaseDetailComponent implements OnInit {
           }
         });
     }
+  }
+
+  // --- Late Payment Warnings ---
+
+  async sendWarning(paymentIndex: number, warningType: WarningType) {
+    if (!this.lease) return;
+
+    const warningLabels: Record<WarningType, string> = {
+      [WarningType.FirstWarning]: 'الانذار الأول',
+      [WarningType.SecondWarning]: 'الانذار الثاني',
+      [WarningType.FinancialLetter]: 'الخطاب المالي',
+      [WarningType.EvictionNotice]: 'إشعار الإخلاء'
+    };
+
+    const confirmed = await this.alertService.confirm({
+      title: `إرسال ${warningLabels[warningType]}`,
+      text: `هل أنت متأكد من تسجيل إرسال ${warningLabels[warningType]} للمستأجر "${this.renter?.fullName}"؟`,
+      icon: 'warning'
+    });
+
+    if (!confirmed) return;
+
+    this.store.dispatch(new LeasesActions.SendPaymentWarning(this.lease.id, paymentIndex, warningType))
+      .subscribe({
+        next: () => {
+          this.alertService.toastSuccess(`تم تسجيل ${warningLabels[warningType]} بنجاح`);
+          this.loadLeaseDetails(this.lease!.id);
+        },
+        error: () => this.alertService.toastError('فشل تسجيل الانذار')
+      });
+  }
+
+  async blacklistRenter() {
+    if (!this.renter) return;
+
+    const confirmed = await this.alertService.confirm({
+      title: `إضافة "${this.renter.fullName}" للقائمة السوداء`,
+      text: 'سيتم وضع المستأجر في القائمة السوداء ولن يظهر عند إنشاء عقود جديدة.',
+      icon: 'warning'
+    });
+
+    if (!confirmed) return;
+
+    // Import RentersActions dynamically to avoid circular deps
+    const { RentersActions } = await import('../../../@core/state/renters.state');
+    this.store.dispatch(new RentersActions.UpdateRenter(this.renter.id!, {
+      isBlacklisted: true,
+      blacklistReason: `تم إدراجه في القائمة السوداء من عقد رقم ${this.lease?.id} بتاريخ ${new Date().toLocaleDateString('ar-SA')}`,
+      blacklistedAt: new Date()
+    })).subscribe({
+      next: () => {
+        this.alertService.toastSuccess('تم إضافة المستأجر للقائمة السوداء');
+        this.loadLeaseDetails(this.lease!.id);
+      },
+      error: () => this.alertService.toastError('فشل تحديث حالة المستأجر')
+    });
+  }
+
+  hasAnyWarning(lease: Lease): boolean {
+    return lease.paymentSchedule?.some(p =>
+      p.warningFirstSentAt || p.warningSecondSentAt || p.financialLetterSentAt || p.evictionNoticeSentAt
+    ) || false;
+  }
+
+  getOverduePayments(): { item: PaymentScheduleItem; index: number }[] {
+    if (!this.lease) return [];
+    return this.lease.paymentSchedule
+      .map((item, index) => ({ item, index }))
+      .filter(({ item }) => {
+        if (item.status === PaymentStatus.Paid) return false;
+        const now = new Date();
+        return new Date(item.dueDate) < now;
+      });
   }
 
   goBack() {

@@ -1,6 +1,6 @@
 <app-page-header
   [title]="isEditMode ? 'تعديل مستأجر' : 'إضافة مستأجر جديد'"
-  icon="🔑"
+  icon="bi-person-plus"
   [breadcrumbs]="[
     {label: 'المستأجرون', url: '/app/renters'},
     {label: isEditMode ? 'تعديل' : 'جديد'}
@@ -28,21 +28,6 @@
           </div>
         </div>
 
-        <!-- National ID -->
-        <div class="col-md-6">
-          <label class="form-label">رقم الهوية الوطنية</label>
-          <input
-            type="text"
-            class="form-control"
-            formControlName="nationalId"
-            [class.is-invalid]="renterForm.get('nationalId')?.invalid && renterForm.get('nationalId')?.touched"
-            placeholder="1234567890"
-            maxlength="10">
-          <div class="invalid-feedback">
-            {{ getErrorMessage('nationalId') }}
-          </div>
-        </div>
-
         <!-- Phone -->
         <div class="col-md-6">
           <label class="form-label">رقم الجوال <span class="text-danger">*</span></label>
@@ -58,28 +43,66 @@
           </div>
         </div>
 
-        <!-- Email -->
-        <div class="col-md-6">
-          <label class="form-label">البريد الإلكتروني</label>
+        <!-- ID Type -->
+        <div class="col-md-4">
+          <label class="form-label">نوع الوثيقة <span class="text-danger">*</span></label>
+          <select class="form-select" formControlName="idType">
+            <option *ngFor="let type of idTypes" [value]="type.value">{{ type.label }}</option>
+          </select>
+        </div>
+
+        <!-- National ID / Residency / Commercial Record -->
+        <div class="col-md-4">
+          <label class="form-label">رقم الوثيقة</label>
           <input
-            type="email"
+            type="text"
             class="form-control"
-            formControlName="email"
-            [class.is-invalid]="renterForm.get('email')?.invalid && renterForm.get('email')?.touched"
-            placeholder="example@email.com">
+            formControlName="nationalId"
+            [class.is-invalid]="renterForm.get('nationalId')?.invalid && renterForm.get('nationalId')?.touched"
+            placeholder="1234567890"
+            maxlength="10">
           <div class="invalid-feedback">
-            {{ getErrorMessage('email') }}
+            {{ getErrorMessage('nationalId') }}
           </div>
         </div>
 
-        <!-- Address -->
-        <div class="col-md-12">
-          <label class="form-label">العنوان</label>
-          <textarea
+        <!-- Nationality -->
+        <div class="col-md-4">
+          <label class="form-label">الجنسية</label>
+          <input
+            type="text"
             class="form-control"
-            formControlName="address"
-            rows="2"
-            placeholder="أدخل العنوان"></textarea>
+            formControlName="nationality"
+            placeholder="مثال: سعودي">
+        </div>
+
+        <!-- Birth Date -->
+        <div class="col-md-4">
+          <label class="form-label">تاريخ الميلاد (ميلادي)</label>
+          <input
+            type="date"
+            class="form-control"
+            formControlName="birthDate">
+        </div>
+
+        <!-- Marital Status -->
+        <div class="col-md-4">
+          <label class="form-label">الحالة الاجتماعية</label>
+          <select class="form-select" formControlName="maritalStatus">
+            <option [ngValue]="null">-- اختر --</option>
+            <option *ngFor="let status of maritalStatuses" [value]="status.value">{{ status.label }}</option>
+          </select>
+        </div>
+
+        <!-- Family Member Count (only if married) -->
+        <div class="col-md-4" *ngIf="isMarried">
+          <label class="form-label">عدد أفراد الأسرة</label>
+          <input
+            type="number"
+            class="form-control"
+            formControlName="familyMemberCount"
+            min="1"
+            placeholder="عدد الأفراد">
         </div>
       </div>
 
@@ -123,19 +146,9 @@
         </div>
       </div>
 
-      <!-- Status & Notes -->
-      <h5 class="mb-3 text-brand">معلومات إضافية</h5>
+      <!-- Notes -->
+      <h5 class="mb-3 text-brand">ملاحظات</h5>
       <div class="row g-3 mb-4">
-        <!-- Status -->
-        <div class="col-md-6">
-          <label class="form-label">الحالة <span class="text-danger">*</span></label>
-          <select class="form-select" formControlName="status">
-            <option value="Active">نشط</option>
-            <option value="Inactive">غير نشط</option>
-          </select>
-        </div>
-
-        <!-- Notes -->
         <div class="col-md-12">
           <label class="form-label">ملاحظات</label>
           <textarea

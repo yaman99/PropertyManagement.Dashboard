@@ -106,7 +106,7 @@
   </div>
 
   <!-- Buildings with Stats -->
-  <div class="card">
+  <div class="card mb-4">
     <div class="card-header d-flex justify-content-between align-items-center">
       <h5 class="mb-0">
         <i class="bi bi-buildings text-brand"></i> مباني المالك
@@ -171,6 +171,157 @@
                   [routerLink]="['/app/buildings/edit', building.id]">
                   <i class="bi bi-eye"></i> عرض
                 </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delegations Section -->
+  <div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">
+        <i class="bi bi-file-earmark-person text-brand"></i> وكالات المالك
+      </h5>
+      <button class="btn btn-brand btn-sm" (click)="openDelegationForm()" *ngIf="buildings.length > 0">
+        <i class="bi bi-plus-lg"></i> إضافة وكالة
+      </button>
+    </div>
+    <div class="card-body">
+      <!-- No delegations -->
+      <div *ngIf="delegations.length === 0 && !showDelegationForm" class="text-center py-4 text-muted">
+        <i class="bi bi-file-earmark-person" style="font-size: 2rem;"></i>
+        <p class="mt-2">لا توجد وكالات مسجلة لهذا المالك</p>
+      </div>
+
+      <!-- Delegation Form -->
+      <div *ngIf="showDelegationForm" class="card bg-light mb-4">
+        <div class="card-body">
+          <h6 class="mb-3">{{ editingDelegationId ? 'تعديل الوكالة' : 'إضافة وكالة جديدة' }}</h6>
+          <form [formGroup]="delegationForm" (ngSubmit)="saveDelegation()">
+            <div class="row g-3">
+              <!-- Building -->
+              <div class="col-md-6">
+                <label class="form-label">المبنى <span class="text-danger">*</span></label>
+                <select class="form-select" formControlName="buildingId"
+                  [class.is-invalid]="delegationForm.get('buildingId')?.invalid && delegationForm.get('buildingId')?.touched">
+                  <option value="">-- اختر المبنى --</option>
+                  <option *ngFor="let b of buildings" [value]="b.id">{{ b.name }}</option>
+                </select>
+                <div class="invalid-feedback">يرجى اختيار المبنى</div>
+              </div>
+
+              <!-- Delegatee Name -->
+              <div class="col-md-6">
+                <label class="form-label">اسم الوكيل <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" formControlName="delegateeName"
+                  [class.is-invalid]="delegationForm.get('delegateeName')?.invalid && delegationForm.get('delegateeName')?.touched"
+                  placeholder="الاسم الكامل للوكيل">
+                <div class="invalid-feedback">اسم الوكيل مطلوب</div>
+              </div>
+
+              <!-- Delegatee ID -->
+              <div class="col-md-4">
+                <label class="form-label">رقم هوية الوكيل</label>
+                <input type="text" class="form-control" formControlName="delegateeIdNumber" placeholder="رقم الهوية">
+              </div>
+
+              <!-- Delegatee Phone -->
+              <div class="col-md-4">
+                <label class="form-label">جوال الوكيل</label>
+                <input type="tel" class="form-control" formControlName="delegateePhone"
+                  [class.is-invalid]="delegationForm.get('delegateePhone')?.invalid && delegationForm.get('delegateePhone')?.touched"
+                  placeholder="05xxxxxxxx" maxlength="10">
+                <div class="invalid-feedback">رقم الهاتف غير صحيح</div>
+              </div>
+
+              <!-- Delegation Number -->
+              <div class="col-md-4">
+                <label class="form-label">رقم الوكالة</label>
+                <input type="text" class="form-control" formControlName="delegationNumber" placeholder="رقم الوكالة">
+              </div>
+
+              <!-- Start Date -->
+              <div class="col-md-6">
+                <label class="form-label">تاريخ البداية <span class="text-danger">*</span></label>
+                <input type="date" class="form-control" formControlName="startDate"
+                  [class.is-invalid]="delegationForm.get('startDate')?.invalid && delegationForm.get('startDate')?.touched">
+                <div class="invalid-feedback">تاريخ البداية مطلوب</div>
+              </div>
+
+              <!-- End Date -->
+              <div class="col-md-6">
+                <label class="form-label">تاريخ الانتهاء <span class="text-danger">*</span></label>
+                <input type="date" class="form-control" formControlName="endDate"
+                  [class.is-invalid]="delegationForm.get('endDate')?.invalid && delegationForm.get('endDate')?.touched">
+                <div class="invalid-feedback">تاريخ الانتهاء مطلوب</div>
+              </div>
+
+              <!-- Notes -->
+              <div class="col-md-12">
+                <label class="form-label">ملاحظات</label>
+                <textarea class="form-control" formControlName="notes" rows="2" placeholder="ملاحظات اختيارية"></textarea>
+              </div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2 mt-3">
+              <button type="button" class="btn btn-secondary btn-sm" (click)="closeDelegationForm()">إلغاء</button>
+              <button type="submit" class="btn btn-brand btn-sm">
+                {{ editingDelegationId ? 'حفظ التعديلات' : 'إضافة الوكالة' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Delegations List -->
+      <div *ngIf="delegations.length > 0" class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead>
+            <tr>
+              <th>المبنى</th>
+              <th>اسم الوكيل</th>
+              <th>رقم الوكالة</th>
+              <th>تاريخ البداية</th>
+              <th>تاريخ الانتهاء</th>
+              <th>الحالة</th>
+              <th>الإجراءات</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let delegation of delegations"
+              [class.table-danger]="isExpiringSoon(delegation) || isExpired(delegation)">
+              <td>{{ getBuildingName(delegation.buildingId) }}</td>
+              <td>
+                <div class="fw-bold">{{ delegation.delegateeName }}</div>
+                <small class="text-muted" *ngIf="delegation.delegateePhone">{{ delegation.delegateePhone }}</small>
+              </td>
+              <td>{{ delegation.delegationNumber || '-' }}</td>
+              <td>{{ formatDate(delegation.startDate) }}</td>
+              <td>
+                <span [class.text-danger]="isExpiringSoon(delegation) || isExpired(delegation)"
+                      [class.fw-bold]="isExpiringSoon(delegation) || isExpired(delegation)">
+                  {{ formatDate(delegation.endDate) }}
+                </span>
+              </td>
+              <td>
+                <span *ngIf="isExpired(delegation)" class="badge bg-danger">منتهية</span>
+                <span *ngIf="isExpiringSoon(delegation)" class="badge bg-warning text-dark">
+                  <i class="bi bi-exclamation-triangle me-1"></i>على وشك الانتهاء
+                </span>
+                <span *ngIf="!isExpired(delegation) && !isExpiringSoon(delegation)" class="badge bg-success">سارية</span>
+              </td>
+              <td>
+                <div class="btn-group btn-group-sm" role="group">
+                  <button class="btn btn-action-edit" (click)="openDelegationForm(delegation)" title="تعديل">
+                    <i class="bi bi-pencil-fill"></i>
+                  </button>
+                  <button class="btn btn-action-delete" (click)="deleteDelegation(delegation)" title="حذف">
+                    <i class="bi bi-trash-fill"></i>
+                  </button>
+                </div>
               </td>
             </tr>
           </tbody>

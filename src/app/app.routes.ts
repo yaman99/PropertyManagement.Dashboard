@@ -17,6 +17,10 @@ export const routes: Routes = [
     loadComponent: () => import('./@features/public/public-unit-detail/public-unit-detail.component').then(m => m.PublicUnitDetailComponent)
   },
   {
+    path: 'inquiry',
+    loadComponent: () => import('./@features/public/general-inquiry/general-inquiry.component').then(m => m.GeneralInquiryComponent)
+  },
+  {
     path: 'login',
     loadComponent: () => import('./@features/login/login.component').then(m => m.LoginComponent)
   },
@@ -77,6 +81,10 @@ export const routes: Routes = [
       {
         path: 'admin/settings',
         loadChildren: () => import('./@features/admin/settings/settings.module').then(m => m.SettingsModule)
+      },
+      {
+        path: 'admin/users',
+        loadChildren: () => import('./@features/admin/users/users.module').then(m => m.UsersModule)
       }
     ]
   },

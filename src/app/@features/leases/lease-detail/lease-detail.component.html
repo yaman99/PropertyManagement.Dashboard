@@ -21,7 +21,7 @@
   <div class="alert"
        [ngClass]="{
          'alert-success': lease.status === LeaseStatus.Active,
-         'alert-warning': lease.status === LeaseStatus.Draft,
+         'alert-warning': lease.status === LeaseStatus.Inactive,
          'alert-secondary': lease.status === LeaseStatus.Expired,
          'alert-danger': lease.status === LeaseStatus.Cancelled
        }">
@@ -29,10 +29,160 @@
       <div>
         <strong>حالة العقد:</strong>
         <app-status-badge [status]="lease.status" class="me-2"></app-status-badge>
+        <span *ngIf="lease.status === LeaseStatus.Inactive && lease.inactiveReason" class="text-warning ms-2">
+          ({{ lease.inactiveReason }})
+        </span>
       </div>
       <div *ngIf="getPaymentProgress() as progress">
         <strong>نسبة التحصيل:</strong>
         {{ progress.percentage }}% ({{ progress.paid }}/{{ progress.total }} دفعات)
+      </div>
+    </div>
+  </div>
+
+  <!-- Late Payment Warnings Panel -->
+  <ng-container *ngIf="getOverduePayments() as overdueItems">
+    <div class="card mb-4 border-danger" *ngIf="overdueItems.length > 0 && lease.status === LeaseStatus.Active">
+      <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
+        <h6 class="mb-0">
+          <i class="bi bi-exclamation-octagon me-2"></i>
+          دفعات متأخرة ({{ overdueItems.length }}) — الانذارات والإجراءات
+        </h6>
+        <button
+          *appHasPermission="[Permission.RENTERS_WRITE]"
+          class="btn btn-sm btn-outline-light"
+          (click)="blacklistRenter()"
+          title="إضافة للقائمة السوداء">
+          <i class="bi bi-slash-circle me-1"></i> إضافة للقائمة السوداء
+        </button>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-sm mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>تاريخ الاستحقاق</th>
+                <th>المبلغ</th>
+                <th>أيام التأخر</th>
+                <th>الانذار الأول</th>
+                <th>الانذار الثاني</th>
+                <th>خطاب مالي / إخلاء</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let entry of overdueItems">
+                <td class="text-danger fw-bold">{{ formatDate(entry.item.dueDate) }}</td>
+                <td>{{ entry.item.amount | number }} ر.س</td>
+                <td>
+                  <ng-container *ngIf="getPaymentWarningStatus(entry.item) as ws">
+                    <span class="badge" [ngClass]="ws.daysOverdue >= 30 ? 'bg-danger' : 'bg-warning text-dark'">
+                      {{ ws.daysOverdue }} يوم
+                    </span>
+                  </ng-container>
+                </td>
+                <!-- First Warning -->
+                <td>
+                  <ng-container *ngIf="getPaymentWarningStatus(entry.item) as ws">
+                    <div *ngIf="entry.item.warningFirstSentAt" class="text-success small">
+                      <i class="bi bi-check-circle me-1"></i>
+                      {{ formatDate(entry.item.warningFirstSentAt) }}
+                    </div>
+                    <button
+                      *ngIf="ws.canSendFirst"
+                      class="btn btn-sm btn-warning"
+                      (click)="sendWarning(entry.index, WarningType.FirstWarning)">
+                      <i class="bi bi-bell me-1"></i> إرسال
+                    </button>
+                    <span *ngIf="!entry.item.warningFirstSentAt && !ws.canSendFirst" class="text-muted small">
+                      بعد {{ 15 - ws.daysOverdue }} يوم
+                    </span>
+                  </ng-container>
+                </td>
+                <!-- Second Warning -->
+                <td>
+                  <ng-container *ngIf="getPaymentWarningStatus(entry.item) as ws">
+                    <div *ngIf="entry.item.warningSecondSentAt" class="text-success small">
+                      <i class="bi bi-check-circle me-1"></i>
+                      {{ formatDate(entry.item.warningSecondSentAt) }}
+                    </div>
+                    <button
+                      *ngIf="ws.canSendSecond"
+                      class="btn btn-sm btn-orange"
+                      style="background:#e07b3f;color:white;"
+                      (click)="sendWarning(entry.index, WarningType.SecondWarning)">
+                      <i class="bi bi-bell-fill me-1"></i> إرسال
+                    </button>
+                    <span *ngIf="!entry.item.warningSecondSentAt && !ws.canSendSecond && entry.item.warningFirstSentAt" class="text-muted small">
+                      في الانتظار
+                    </span>
+                    <span *ngIf="!entry.item.warningFirstSentAt" class="text-muted small">—</span>
+                  </ng-container>
+                </td>
+                <!-- Financial Letter / Eviction -->
+                <td>
+                  <ng-container *ngIf="getPaymentWarningStatus(entry.item) as ws">
+                    <div *ngIf="entry.item.financialLetterSentAt || entry.item.evictionNoticeSentAt" class="text-danger small">
+                      <div *ngIf="entry.item.financialLetterSentAt">
+                        <i class="bi bi-file-text me-1"></i> خطاب: {{ formatDate(entry.item.financialLetterSentAt) }}
+                      </div>
+                      <div *ngIf="entry.item.evictionNoticeSentAt">
+                        <i class="bi bi-door-open me-1"></i> إخلاء: {{ formatDate(entry.item.evictionNoticeSentAt) }}
+                      </div>
+                    </div>
+                    <div *ngIf="ws.canSendFinancialLetter || ws.canSendEviction" class="d-flex gap-1 flex-wrap">
+                      <button
+                        *ngIf="ws.canSendFinancialLetter"
+                        class="btn btn-sm btn-danger"
+                        (click)="sendWarning(entry.index, WarningType.FinancialLetter)"
+                        title="تسجيل إرسال خطاب مالي">
+                        <i class="bi bi-file-earmark-text me-1"></i> خطاب
+                      </button>
+                      <button
+                        *ngIf="ws.canSendEviction"
+                        class="btn btn-sm btn-dark"
+                        (click)="sendWarning(entry.index, WarningType.EvictionNotice)"
+                        title="تسجيل إشعار إخلاء">
+                        <i class="bi bi-door-open me-1"></i> إخلاء
+                      </button>
+                    </div>
+                    <span *ngIf="!ws.canSendFinancialLetter && !ws.canSendEviction && !entry.item.warningSecondSentAt" class="text-muted small">—</span>
+                  </ng-container>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- Activation Actions -->
+  <div class="card mb-4" *ngIf="lease.status === LeaseStatus.Inactive">
+    <div class="card-body">
+      <h6 class="text-warning mb-3"><i class="bi bi-exclamation-triangle me-1"></i> العقد غير نشط - يرجى تأكيد الدفعات التالية:</h6>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="d-flex align-items-center justify-content-between p-3 rounded" [ngClass]="lease.depositPaid ? 'bg-success-subtle' : 'bg-warning-subtle'">
+            <div>
+              <strong>التأمين:</strong> {{ lease.depositAmount | number }} ر.س
+              <span *ngIf="lease.depositPaid" class="badge bg-success ms-2">مدفوع</span>
+            </div>
+            <button *ngIf="!lease.depositPaid" class="btn btn-sm btn-success" (click)="markDepositPaid()">
+              <i class="bi bi-check-lg me-1"></i> تأكيد الدفع
+            </button>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="d-flex align-items-center justify-content-between p-3 rounded" [ngClass]="lease.commissionPaid ? 'bg-success-subtle' : 'bg-warning-subtle'">
+            <div>
+              <strong>عمولة التأجير:</strong> {{ lease.rentalCommission | number }} ر.س ({{ lease.commissionPercentage }}%)
+              <span *ngIf="lease.commissionPaid" class="badge bg-success ms-2">مدفوع</span>
+            </div>
+            <button *ngIf="!lease.commissionPaid" class="btn btn-sm btn-success" (click)="markCommissionPaid()">
+              <i class="bi bi-check-lg me-1"></i> تأكيد الدفع
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -67,8 +217,8 @@
             </div>
             <div class="col-md-4">
               <div class="info-item">
-                <label>قيمة الإيجار</label>
-                <p class="text-brand fw-bold">{{ lease.rentAmount | number }} ر.س</p>
+                <label>قيمة العقد الكلية</label>
+                <p class="text-brand fw-bold">{{ lease.totalContractValue | number }} ر.س</p>
               </div>
             </div>
             <div class="col-md-4">
@@ -79,8 +229,37 @@
             </div>
             <div class="col-md-4">
               <div class="info-item">
-                <label>يوم الاستحقاق</label>
-                <p>{{ lease.dueDayOfMonth || 1 }} من كل شهر</p>
+                <label>عمولة التأجير</label>
+                <p>{{ lease.rentalCommission | number }} ر.س ({{ lease.commissionPercentage }}%)</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Creator & Assignee -->
+          <hr *ngIf="lease.createdByUserName || lease.assignedToUserName || lease.ownerManagerName || lease.renterManagerName">
+          <div class="row g-3" *ngIf="lease.createdByUserName || lease.assignedToUserName || lease.ownerManagerName || lease.renterManagerName">
+            <div class="col-md-3" *ngIf="lease.createdByUserName">
+              <div class="info-item">
+                <label>منشئ العقد</label>
+                <p>{{ lease.createdByUserName }}</p>
+              </div>
+            </div>
+            <div class="col-md-3" *ngIf="lease.assignedToUserName">
+              <div class="info-item">
+                <label>مسؤول المتابعة</label>
+                <p>{{ lease.assignedToUserName }}</p>
+              </div>
+            </div>
+            <div class="col-md-3" *ngIf="lease.ownerManagerName">
+              <div class="info-item">
+                <label>مسؤول المبنى (المالك)</label>
+                <p>{{ lease.ownerManagerName }}</p>
+              </div>
+            </div>
+            <div class="col-md-3" *ngIf="lease.renterManagerName">
+              <div class="info-item">
+                <label>مسؤول المبنى (المستأجر)</label>
+                <p>{{ lease.renterManagerName }}</p>
               </div>
             </div>
           </div>
@@ -178,11 +357,9 @@
               <a [href]="'tel:' + renter?.phone">{{ renter?.phone }}</a>
             </p>
           </div>
-          <div class="info-item" *ngIf="renter?.email">
-            <label>البريد</label>
-            <p>
-              <a [href]="'mailto:' + renter?.email">{{ renter?.email }}</a>
-            </p>
+          <div class="info-item" *ngIf="renter?.nationality">
+            <label>الجنسية</label>
+            <p>{{ renter?.nationality }}</p>
           </div>
           <div class="info-item" *ngIf="renter?.nationalId">
             <label>رقم الهوية</label>

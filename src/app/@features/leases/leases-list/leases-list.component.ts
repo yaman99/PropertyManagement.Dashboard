@@ -40,6 +40,7 @@ export class LeasesListComponent implements OnInit {
 
   searchTerm = '';
   statusFilter: LeaseStatus | 'All' = 'All';
+  paymentFilter: 'All' | 'UnpaidDeposit' | 'UnpaidCommission' = 'All';
 
   Permission = Permission;
   LeaseStatus = LeaseStatus;
@@ -74,6 +75,13 @@ export class LeasesListComponent implements OnInit {
       filtered = filtered.filter(lease => lease.status === this.statusFilter);
     }
 
+    // Filter by payment status
+    if (this.paymentFilter === 'UnpaidDeposit') {
+      filtered = filtered.filter(lease => !lease.depositPaid);
+    } else if (this.paymentFilter === 'UnpaidCommission') {
+      filtered = filtered.filter(lease => !lease.commissionPaid);
+    }
+
     return filtered;
   }
 
@@ -105,7 +113,8 @@ export class LeasesListComponent implements OnInit {
     const labels: Record<string, string> = {
       'Monthly': 'شهري',
       'Quarterly': 'ربع سنوي',
-      'Yearly': 'سنوي'
+      'SemiAnnual': 'كل 6 أشهر',
+      'Annual': 'سنوي'
     };
     return labels[cycle] || cycle;
   }
@@ -113,6 +122,7 @@ export class LeasesListComponent implements OnInit {
   getStatusLabel(status: LeaseStatus): string {
     const labels: Record<string, string> = {
       'Draft': 'مسودة',
+      'Inactive': 'غير نشط',
       'Active': 'نشط',
       'Expired': 'منتهي',
       'Cancelled': 'ملغي'
@@ -160,6 +170,7 @@ export class LeasesListComponent implements OnInit {
 
   clearFilters() {
     this.statusFilter = 'All';
+    this.paymentFilter = 'All';
     this.applyFilters();
   }
 }
