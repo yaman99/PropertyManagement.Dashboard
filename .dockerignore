@@ -1,0 +1,26 @@
+# Dependencies — reinstalled inside the container
+node_modules/
+
+# Build output — rebuilt inside the container
+dist/
+
+# Git history
+.git/
+.gitignore
+
+# Editor / OS
+.vscode/
+.idea/
+*.DS_Store
+Thumbs.db
+
+# Test artefacts
+coverage/
+
+# Env files (never bake secrets into images)
+.env
+.env.*
+
+# Docker files themselves (no need to copy)
+Dockerfile
+.dockerignore
