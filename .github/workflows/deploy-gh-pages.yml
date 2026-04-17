@@ -1,0 +1,47 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]       # يعمل تلقائياً عند كل push على main
+  workflow_dispatch:        # أو يدوياً من GitHub Actions tab
+
+permissions:
+  contents: write           # needed to push to gh-pages branch
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. سحب الكود
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 2. إعداد Node.js
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      # 3. تثبيت الحزم
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      # 4. بناء Angular مع base-href صحيح لـ GitHub Pages
+      - name: Build Angular app
+        run: npx ng build --configuration production --base-href /PropertyManagement.Dashboard/
+
+      # 5. نسخ index.html → 404.html لحل مشكلة routing
+      #    GitHub Pages يرجع 404.html عند أي مسار غير موجود
+      #    فنجعل 404.html هو نفس index.html حتى يعمل Angular routing
+      - name: Fix SPA routing (copy index.html → 404.html)
+        run: cp dist/MarbaeDemo/browser/index.html dist/MarbaeDemo/browser/404.html
+
+      # 6. نشر المجلد dist على branch gh-pages
+      - name: Deploy to gh-pages branch
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist/MarbaeDemo/browser
+          force_orphan: true    # gh-pages branch يبدأ نظيفاً في كل مرة

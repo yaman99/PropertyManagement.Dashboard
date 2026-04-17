@@ -8,6 +8,25 @@
   <meta name="description" content="نظام إدارة العقارات - Omar Almarbie Real Estate">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="apple-touch-icon" href="assets/branding/logo-white-bg.jpeg">
+
+  <!--
+    GitHub Pages SPA Routing Fix
+    When 404.html redirects here with ?p=/some/path, we restore the original URL
+    so Angular Router can handle it correctly.
+    See: https://github.com/rafgraph/spa-github-pages
+  -->
+  <script>
+    (function (l) {
+      if (l.search[1] === '/') {
+        var decoded = l.search.slice(1).split('&').map(function (s) {
+          return s.replace(/~and~/g, '&');
+        }).join('?');
+        window.history.replaceState(null, null,
+          l.pathname.slice(0, -1) + decoded + l.hash
+        );
+      }
+    }(window.location));
+  </script>
 </head>
 <body>
   <app-root></app-root>
