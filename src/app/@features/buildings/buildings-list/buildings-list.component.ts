@@ -132,8 +132,8 @@ export class BuildingsListComponent implements OnInit {
   }
 
   manageUnits(building: Building) {
-    // Navigate to units page with building filter
-    this.router.navigate(['/app/units'], { queryParams: { buildingId: building.id } });
+    // Navigate to building detail page (shows units inside the building)
+    this.router.navigate(['/app/buildings', building.id]);
   }
 
   viewOnMap(building: Building) {

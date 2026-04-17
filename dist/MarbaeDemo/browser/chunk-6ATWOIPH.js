@@ -1,0 +1,1 @@
+import{i as r,q as i}from"./chunk-DT7OHM66.js";import{Qa as e,S as t}from"./chunk-CBTH4GGL.js";var s=[{path:"",loadComponent:()=>import("./chunk-UJY4OAIE.js").then(o=>o.UsersListComponent)}],m=class o{static \u0275fac=function(n){return new(n||o)};static \u0275mod=e({type:o});static \u0275inj=t({imports:[r,i.forChild(s)]})};export{m as UsersModule};

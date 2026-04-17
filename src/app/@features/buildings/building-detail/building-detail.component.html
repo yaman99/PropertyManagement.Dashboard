@@ -1,0 +1,223 @@
+<app-page-header
+  [title]="building?.name || 'تفاصيل المبنى'"
+  icon="bi-building"
+  [breadcrumbs]="[{label: 'المباني', url: '/app/buildings'}, {label: building?.name || '...'}]">
+  <div actions class="d-flex gap-2">
+    <button
+      *appHasPermission="[Permission.UNITS_WRITE]"
+      class="btn btn-brand"
+      (click)="addUnit()">
+      <i class="bi bi-plus-lg me-1"></i> إضافة وحدة
+    </button>
+    <a
+      *appHasPermission="[Permission.UNITS_WRITE]"
+      class="btn btn-outline-secondary"
+      [routerLink]="['/app/buildings/edit', buildingId]">
+      <i class="bi bi-pencil me-1"></i> تعديل المبنى
+    </a>
+  </div>
+</app-page-header>
+
+<!-- Loading -->
+<div *ngIf="loading" class="text-center py-5">
+  <div class="spinner-border text-brand" role="status">
+    <span class="visually-hidden">جاري التحميل...</span>
+  </div>
+</div>
+
+<div *ngIf="!loading && building" dir="rtl">
+
+  <!-- Stats Row -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <div class="card text-center border-0 shadow-sm">
+        <div class="card-body py-3">
+          <div class="fs-2 fw-bold text-brand">{{ buildingUnits.length }}</div>
+          <small class="text-muted">إجمالي الوحدات</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-center border-0 shadow-sm">
+        <div class="card-body py-3">
+          <div class="fs-2 fw-bold text-success">{{ getAvailableCount() }}</div>
+          <small class="text-muted">متاح</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-center border-0 shadow-sm">
+        <div class="card-body py-3">
+          <div class="fs-2 fw-bold text-primary">{{ getRentedCount() }}</div>
+          <small class="text-muted">مؤجر</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-center border-0 shadow-sm">
+        <div class="card-body py-3">
+          <div class="fs-2 fw-bold text-secondary">{{ building.totalFloors || '-' }}</div>
+          <small class="text-muted">طوابق</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Building Info -->
+  <div class="row g-4 mb-4">
+    <div class="col-md-8">
+      <div class="card h-100">
+        <div class="card-header bg-light fw-bold">
+          <i class="bi bi-info-circle me-2 text-brand"></i> معلومات المبنى
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <small class="text-muted d-block">اسم المبنى</small>
+              <strong>{{ building.name }}</strong>
+            </div>
+            <div class="col-md-6">
+              <small class="text-muted d-block">المالك</small>
+              <strong>{{ ownerName || '-' }}</strong>
+            </div>
+            <div class="col-md-6">
+              <small class="text-muted d-block">العنوان</small>
+              <span>{{ building.address }}</span>
+              <small class="text-muted d-block" *ngIf="building.district || building.city">
+                {{ building.district }}{{ building.district && building.city ? '، ' : '' }}{{ building.city }}
+              </small>
+            </div>
+            <div class="col-md-6">
+              <small class="text-muted d-block">الحالة</small>
+              <app-status-badge [status]="building.status"></app-status-badge>
+            </div>
+            <div class="col-md-4" *ngIf="building.apartmentCount">
+              <small class="text-muted d-block">شقق</small>
+              <span>{{ building.apartmentCount }}</span>
+            </div>
+            <div class="col-md-4" *ngIf="building.shopCount">
+              <small class="text-muted d-block">محلات</small>
+              <span>{{ building.shopCount }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card h-100">
+        <div class="card-header bg-light fw-bold">
+          <i class="bi bi-people me-2 text-brand"></i> جهات الاتصال
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-12" *ngIf="building.guardName">
+              <small class="text-muted d-block">الحارس</small>
+              <span>{{ building.guardName }}</span>
+              <small class="text-muted d-block" *ngIf="building.guardPhone">
+                <i class="bi bi-telephone me-1"></i>{{ building.guardPhone }}
+              </small>
+            </div>
+            <div class="col-12" *ngIf="building.ownerManagerName">
+              <small class="text-muted d-block">مسؤول المبنى (المالك)</small>
+              <span>{{ building.ownerManagerName }}</span>
+            </div>
+            <div class="col-12" *ngIf="building.renterManagerName">
+              <small class="text-muted d-block">مسؤول المبنى (المستأجر)</small>
+              <span>{{ building.renterManagerName }}</span>
+            </div>
+            <div class="col-12"
+              *ngIf="!building.guardName && !building.ownerManagerName && !building.renterManagerName">
+              <p class="text-muted mb-0 small">لا توجد جهات اتصال مضافة</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Units Section -->
+  <div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">
+        <i class="bi bi-grid me-2 text-brand"></i> وحدات المبنى
+        <span class="badge bg-secondary ms-2">{{ buildingUnits.length }}</span>
+      </h5>
+      <button
+        *appHasPermission="[Permission.UNITS_WRITE]"
+        class="btn btn-sm btn-brand"
+        (click)="addUnit()">
+        <i class="bi bi-plus-lg me-1"></i> إضافة وحدة
+      </button>
+    </div>
+    <div class="card-body p-0">
+
+      <!-- Empty State -->
+      <div *ngIf="buildingUnits.length === 0" class="p-4">
+        <app-empty-state
+          icon="bi-building"
+          title="لا توجد وحدات"
+          message="لم يتم إضافة أي وحدات لهذا المبنى بعد">
+          <button
+            *appHasPermission="[Permission.UNITS_WRITE]"
+            class="btn btn-brand"
+            (click)="addUnit()">
+            <i class="bi bi-plus-lg me-1"></i> إضافة أول وحدة
+          </button>
+        </app-empty-state>
+      </div>
+
+      <!-- Units Table -->
+      <div *ngIf="buildingUnits.length > 0" class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>كود الوحدة</th>
+              <th>النوع</th>
+              <th>الطابق</th>
+              <th>المساحة</th>
+              <th>الإيجار الشهري</th>
+              <th>الحالة</th>
+              <th>الإجراءات</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let unit of buildingUnits">
+              <td><strong>{{ unit.unitCode }}</strong></td>
+              <td>{{ getUnitTypeLabel(unit.type) }}</td>
+              <td>{{ unit.floor || '-' }}</td>
+              <td>{{ unit.areaSqm ? (unit.areaSqm + ' م²') : '-' }}</td>
+              <td>
+                <span class="text-brand fw-bold">{{ unit.rentPrice | number }}</span>
+                <small class="text-muted"> ر.س</small>
+              </td>
+              <td>
+                <span class="badge" [ngClass]="getStatusBadgeClass(unit.status)">
+                  {{ getUnitStatusLabel(unit.status) }}
+                </span>
+              </td>
+              <td>
+                <div class="btn-group btn-group-sm" role="group">
+                  <a class="btn btn-action-edit"
+                    [routerLink]="['/app/units/edit', unit.id]"
+                    title="تعديل">
+                    <i class="bi bi-pencil-fill"></i>
+                  </a>
+                  <button
+                    *appHasPermission="[Permission.UNITS_WRITE]"
+                    class="btn btn-action-delete"
+                    (click)="deleteUnit(unit)"
+                    title="حذف">
+                    <i class="bi bi-trash-fill"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+
+</div>

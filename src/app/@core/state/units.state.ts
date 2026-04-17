@@ -1,10 +1,9 @@
 import { Injectable } from '@angular/core';
 import { State, Action, StateContext, Selector } from '@ngxs/store';
-import { tap, catchError, switchMap } from 'rxjs/operators';
+import { tap, catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { Unit } from '../domain/models/unit.model';
 import { UnitsService } from '../application/services/units.service';
-import { AccountingService } from '../application/services/accounting.service';
 
 // Actions
 export namespace UnitsActions {
@@ -54,8 +53,7 @@ export interface UnitsStateModel {
 @Injectable()
 export class UnitsState {
   constructor(
-    private unitsService: UnitsService,
-    private accountingService: AccountingService
+    private unitsService: UnitsService
   ) {}
 
   @Selector()
@@ -103,18 +101,14 @@ export class UnitsState {
   createUnit(ctx: StateContext<UnitsStateModel>, action: UnitsActions.CreateUnit) {
     ctx.patchState({ loading: true, error: null });
 
+    // Account creation is handled inside UnitsService.create() — no duplication here
     return this.unitsService.create(action.payload).pipe(
-      switchMap(unit => {
-        // Auto-create accounting account for unit (revenue tracking)
-        return this.accountingService.createUnitAccount(unit).pipe(
-          tap(() => {
-            const state = ctx.getState();
-            ctx.patchState({
-              units: [...state.units, unit],
-              loading: false
-            });
-          })
-        );
+      tap(unit => {
+        const state = ctx.getState();
+        ctx.patchState({
+          units: [...state.units, unit],
+          loading: false
+        });
       }),
       catchError(error => {
         ctx.patchState({ error: error.message, loading: false });

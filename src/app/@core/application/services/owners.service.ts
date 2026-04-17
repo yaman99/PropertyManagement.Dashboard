@@ -29,13 +29,10 @@ export class OwnersService {
   create(dto: CreateOwnerDto): Observable<Owner> {
     return this.repository.create(dto).pipe(
       switchMap(owner => {
-        // If owner has account, create their ledger account
-        if (owner.hasAccount) {
-          return this.accountingService.createOwnerAccount(owner).pipe(
-            map(() => owner)
-          );
-        }
-        return [owner];
+        // Always create a ledger account for every owner (liability account — what we owe them)
+        return this.accountingService.createOwnerAccount(owner).pipe(
+          map(() => owner)
+        );
       })
     );
   }

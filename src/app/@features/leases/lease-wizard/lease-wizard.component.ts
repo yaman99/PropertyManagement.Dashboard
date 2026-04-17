@@ -114,10 +114,19 @@ export class LeaseWizardComponent implements OnInit {
     this.store.dispatch(new RentersActions.LoadRenters());
     this.store.dispatch(new OwnersActions.LoadOwners());
 
-    // Update allowed payment cycles when duration changes
+    // Update allowed payment cycles when duration changes + recalculate total if unit selected
     this.leaseForm.get('contractDuration')?.valueChanges.subscribe(duration => {
       this.updateAllowedPaymentCycles(duration);
       this.updateEndDate();
+      // If unit was pre-selected, recalculate total contract value for the new duration
+      if (this.selectedUnit?.rentPrice) {
+        const months = this.getMonthsForDuration(duration);
+        this.leaseForm.patchValue(
+          { totalContractValue: this.selectedUnit.rentPrice * months },
+          { emitEvent: false }   // avoid circular trigger
+        );
+        this.updateCommission();
+      }
       this.updatePaymentSchedule();
     });
 
@@ -156,9 +165,20 @@ export class LeaseWizardComponent implements OnInit {
 
   selectUnit(unit: Unit) {
     this.selectedUnit = unit;
-    // Pre-fill total contract value from unit rent price (annual)
+    // Pre-fill total contract value based on CURRENT duration (not always x12)
     if (unit.rentPrice) {
-      this.leaseForm.patchValue({ totalContractValue: unit.rentPrice * 12 });
+      const duration = this.leaseForm.get('contractDuration')?.value || ContractDuration.OneYear;
+      const months = this.getMonthsForDuration(duration);
+      this.leaseForm.patchValue({ totalContractValue: unit.rentPrice * months });
+    }
+  }
+
+  private getMonthsForDuration(duration: ContractDuration): number {
+    switch (duration) {
+      case ContractDuration.OneYear:     return 12;
+      case ContractDuration.SixMonths:   return 6;
+      case ContractDuration.ThreeMonths: return 3;
+      default: return 12;
     }
   }
 

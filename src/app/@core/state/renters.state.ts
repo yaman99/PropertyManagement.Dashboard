@@ -1,10 +1,9 @@
 import { Injectable } from '@angular/core';
 import { State, Action, StateContext, Selector } from '@ngxs/store';
-import { tap, catchError, switchMap } from 'rxjs/operators';
+import { tap, catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { Renter, CreateRenterDto } from '../domain/models/renter.model';
 import { RentersService } from '../application/services/renters.service';
-import { AccountingService } from '../application/services/accounting.service';
 
 // Actions
 export namespace RentersActions {
@@ -54,8 +53,7 @@ export interface RentersStateModel {
 @Injectable()
 export class RentersState {
   constructor(
-    private rentersService: RentersService,
-    private accountingService: AccountingService
+    private rentersService: RentersService
   ) {}
 
   @Selector()
@@ -108,18 +106,14 @@ export class RentersState {
   createRenter(ctx: StateContext<RentersStateModel>, action: RentersActions.CreateRenter) {
     ctx.patchState({ loading: true, error: null });
 
+    // Account creation is handled inside RentersService.create() — no duplication here
     return this.rentersService.create(action.payload).pipe(
-      switchMap(renter => {
-        // Auto-create accounting account for renter (receivables tracking)
-        return this.accountingService.createRenterAccount(renter).pipe(
-          tap(() => {
-            const state = ctx.getState();
-            ctx.patchState({
-              renters: [...state.renters, renter],
-              loading: false
-            });
-          })
-        );
+      tap(renter => {
+        const state = ctx.getState();
+        ctx.patchState({
+          renters: [...state.renters, renter],
+          loading: false
+        });
       }),
       catchError(error => {
         ctx.patchState({ error: error.message, loading: false });

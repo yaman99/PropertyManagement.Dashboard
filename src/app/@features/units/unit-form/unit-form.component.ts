@@ -212,10 +212,25 @@ export class UnitFormComponent implements OnInit {
 
   navigateBack() {
     if (this.preselectedBuildingId) {
-      this.router.navigate(['/app/units'], { queryParams: { buildingId: this.preselectedBuildingId } });
+      // Go back to building detail page
+      this.router.navigate(['/app/buildings', this.preselectedBuildingId]);
     } else {
       this.router.navigate(['/app/units']);
     }
+  }
+
+  get breadcrumbs() {
+    if (this.preselectedBuildingId) {
+      return [
+        { label: 'المباني', url: '/app/buildings' },
+        { label: this.selectedBuilding?.name || 'المبنى', url: '/app/buildings/' + this.preselectedBuildingId },
+        { label: 'إضافة وحدة' }
+      ];
+    }
+    return [
+      { label: 'الوحدات', url: '/app/units' },
+      { label: this.isEditMode ? 'تعديل' : 'جديد' }
+    ];
   }
 
   cancel() {

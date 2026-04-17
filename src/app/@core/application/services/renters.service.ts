@@ -26,13 +26,10 @@ export class RentersService {
   create(dto: CreateRenterDto): Observable<Renter> {
     return this.repository.create(dto).pipe(
       switchMap(renter => {
-        // Create ledger account for renter if they have a login account
-        if (renter.hasAccount) {
-          return this.accountingService.createRenterAccount(renter).pipe(
-            map(() => renter)
-          );
-        }
-        return [renter];
+        // Always create a ledger account for every renter (receivable — what they owe us)
+        return this.accountingService.createRenterAccount(renter).pipe(
+          map(() => renter)
+        );
       })
     );
   }

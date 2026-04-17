@@ -1,0 +1,1 @@
+var t=(e=>(e.New="new",e.Contacted="contacted",e.Qualified="qualified",e.Rejected="rejected",e.Converted="converted",e))(t||{});var r=(n=>(n.Monthly="monthly",n.Quarterly="quarterly",n.SemiAnnual="semi-annual",n.Annual="annual",n))(r||{});export{t as a,r as b};

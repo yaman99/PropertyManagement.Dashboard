@@ -1,10 +1,9 @@
 import { Injectable } from '@angular/core';
 import { State, Action, StateContext, Selector } from '@ngxs/store';
-import { tap, catchError, switchMap } from 'rxjs/operators';
+import { tap, catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { Owner } from '../domain/models/owner.model';
 import { OwnersService } from '../application/services/owners.service';
-import { AccountingService } from '../application/services/accounting.service';
 
 // Actions
 export namespace OwnersActions {
@@ -54,8 +53,7 @@ export interface OwnersStateModel {
 @Injectable()
 export class OwnersState {
   constructor(
-    private ownersService: OwnersService,
-    private accountingService: AccountingService
+    private ownersService: OwnersService
   ) {}
 
   @Selector()
@@ -98,18 +96,14 @@ export class OwnersState {
   createOwner(ctx: StateContext<OwnersStateModel>, action: OwnersActions.CreateOwner) {
     ctx.patchState({ loading: true, error: null });
 
+    // Account creation is handled inside OwnersService.create() — no duplication here
     return this.ownersService.create(action.payload).pipe(
-      switchMap(owner => {
-        // Auto-create accounting account for owner
-        return this.accountingService.createOwnerAccount(owner).pipe(
-          tap(() => {
-            const state = ctx.getState();
-            ctx.patchState({
-              owners: [...state.owners, owner],
-              loading: false
-            });
-          })
-        );
+      tap(owner => {
+        const state = ctx.getState();
+        ctx.patchState({
+          owners: [...state.owners, owner],
+          loading: false
+        });
       }),
       catchError(error => {
         ctx.patchState({ error: error.message, loading: false });
