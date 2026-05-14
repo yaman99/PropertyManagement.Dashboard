@@ -7,16 +7,16 @@
   ]">
 </app-page-header>
 
-<div class="card" dir="rtl">
-  <div class="card-body">
-    <form [formGroup]="buildingForm" (ngSubmit)="onSubmit()">
+<form [formGroup]="buildingForm" (ngSubmit)="onSubmit()" dir="rtl">
 
-      <!-- ===== Section 1: Basic Info ===== -->
-      <h5 class="section-title mb-3">
-        <i class="bi bi-info-circle"></i> المعلومات الأساسية
-      </h5>
-      <div class="row g-3 mb-4">
-        <!-- Owner Selection -->
+  <!-- ── Section 1: Basic Info ─────────────────────────────── -->
+  <div class="card mb-3">
+    <div class="card-header fw-bold">
+      <i class="bi bi-info-circle me-2 text-brand"></i> المعلومات الأساسية
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
+
         <div class="col-md-6">
           <label class="form-label">المالك <span class="text-danger">*</span></label>
           <select class="form-select" formControlName="ownerId"
@@ -27,119 +27,85 @@
             </option>
           </select>
           <div class="invalid-feedback">يرجى اختيار المالك</div>
-          <small class="text-muted">جميع الوحدات في هذا المبنى ستكون تابعة لهذا المالك</small>
         </div>
 
-        <!-- Building Name -->
         <div class="col-md-6">
           <label class="form-label">اسم المبنى <span class="text-danger">*</span></label>
-          <input type="text" class="form-control" formControlName="name"
-            placeholder="مثال: برج السلام"
+          <input type="text" class="form-control" formControlName="name" placeholder="مثال: برج السلام"
             [ngClass]="{'is-invalid': buildingForm.get('name')?.touched && buildingForm.get('name')?.invalid}">
-          <div class="invalid-feedback">اسم المبنى مطلوب (حرفين على الأقل)</div>
+          <div class="invalid-feedback">اسم المبنى مطلوب</div>
         </div>
 
-        <!-- Address -->
-        <div class="col-md-12">
+        <div class="col-12">
           <label class="form-label">العنوان <span class="text-danger">*</span></label>
           <input type="text" class="form-control" formControlName="address"
-            placeholder="العنوان التفصيلي للمبنى"
             [ngClass]="{'is-invalid': buildingForm.get('address')?.touched && buildingForm.get('address')?.invalid}">
           <div class="invalid-feedback">العنوان مطلوب</div>
         </div>
 
-        <!-- City -->
         <div class="col-md-4">
           <label class="form-label">المدينة</label>
-          <input type="text" class="form-control" formControlName="city"
-            placeholder="مثال: الرياض">
+          <input type="text" class="form-control" formControlName="city" placeholder="مثال: الرياض">
         </div>
 
-        <!-- District -->
         <div class="col-md-4">
           <label class="form-label">الحي</label>
-          <input type="text" class="form-control" formControlName="district"
-            placeholder="مثال: حي النخيل">
+          <input type="text" class="form-control" formControlName="district" placeholder="مثال: حي النخيل">
         </div>
 
-        <!-- Year Built -->
         <div class="col-md-4">
           <label class="form-label">سنة البناء</label>
-          <input type="number" class="form-control" formControlName="yearBuilt"
-            min="1900" [max]="2026" placeholder="مثال: 2020">
+          <input type="number" class="form-control" formControlName="yearBuilt" min="1900" placeholder="2020">
         </div>
 
-        <!-- Total Floors -->
         <div class="col-md-4">
           <label class="form-label">عدد الطوابق</label>
-          <input type="number" class="form-control" formControlName="totalFloors"
-            min="1" max="100" placeholder="مثال: 10">
+          <input type="number" class="form-control" formControlName="totalFloors" min="1" max="100">
         </div>
 
-        <!-- Status (only in edit mode) -->
         <div class="col-md-4" *ngIf="isEditMode">
           <label class="form-label">الحالة</label>
           <select class="form-select" formControlName="status">
-            <option *ngFor="let status of buildingStatuses" [value]="status">
-              {{ getStatusLabel(status) }}
-            </option>
+            <option *ngFor="let status of buildingStatuses" [value]="status">{{ getStatusLabel(status) }}</option>
           </select>
         </div>
+
       </div>
+    </div>
+  </div>
 
-      <hr class="my-4">
+  <!-- ── Section 2: Location ───────────────────────────────── -->
+  <div class="card mb-3">
+    <div class="card-header fw-bold">
+      <i class="bi bi-geo-alt me-2 text-brand"></i> الموقع
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
 
-      <!-- ===== Section 2: Images ===== -->
-      <h5 class="section-title mb-3">
-        <i class="bi bi-image"></i> الصور والمستندات
-      </h5>
-      <div class="row g-3 mb-4">
-        <!-- Building Image -->
-        <div class="col-md-6">
-          <label class="form-label">صورة المبنى</label>
-          <div class="image-upload-area">
-            <div *ngIf="buildingImagePreview" class="image-preview mb-2">
-              <img [src]="buildingImagePreview" alt="صورة المبنى" class="img-thumbnail">
-              <button type="button" class="btn btn-sm btn-danger remove-image" (click)="removeImage('building')">
-                <i class="bi bi-x-lg"></i>
-              </button>
-            </div>
-            <input type="file" class="form-control" accept="image/*"
-              (change)="onBuildingImageSelected($event)"
-              [class.d-none]="buildingImagePreview">
-            <small class="text-muted d-block mt-1">ارفع صورة المبنى (JPG, PNG)</small>
-          </div>
-        </div>
-
-        <!-- Deed Image -->
-        <div class="col-md-6">
-          <label class="form-label">صورة صك المبنى</label>
-          <div class="image-upload-area">
-            <div *ngIf="deedImagePreview" class="image-preview mb-2">
-              <img [src]="deedImagePreview" alt="صورة الصك" class="img-thumbnail">
-              <button type="button" class="btn btn-sm btn-danger remove-image" (click)="removeImage('deed')">
-                <i class="bi bi-x-lg"></i>
-              </button>
-            </div>
-            <input type="file" class="form-control" accept="image/*"
-              (change)="onDeedImageSelected($event)"
-              [class.d-none]="deedImagePreview">
-            <small class="text-muted d-block mt-1">ارفع صورة صك المبنى (JPG, PNG, PDF)</small>
-          </div>
-        </div>
-      </div>
-
-      <hr class="my-4">
-
-      <!-- ===== Section 3: Map Location ===== -->
-      <h5 class="section-title mb-3">
-        <i class="bi bi-geo-alt"></i> الموقع على الخريطة
-      </h5>
-      <div class="row g-3 mb-4">
+        <!-- Google Maps Link -->
         <div class="col-12">
-          <div #mapContainer class="map-container rounded border"></div>
-          <small class="text-muted d-block mt-1">انقر على الخريطة لتحديد موقع المبنى، أو اسحب العلامة لتعديل الموقع</small>
+          <label class="form-label">رابط الموقع على جوجل ماب</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-map"></i></span>
+            <input type="url" class="form-control" formControlName="mapLink"
+              placeholder="https://maps.google.com/..."
+              (input)="onMapLinkInput($event)">
+            <span class="input-group-text text-success" *ngIf="buildingForm.get('latitude')?.value">
+              <i class="bi bi-geo-alt-fill"></i>
+            </span>
+          </div>
+          <small class="text-muted">
+            <i class="bi bi-magic me-1"></i>
+            الصق رابط جوجل ماب وسيتم استخراج الإحداثيات وتحديدها على الخريطة تلقائياً
+          </small>
         </div>
+
+        <!-- Interactive Map -->
+        <div class="col-12">
+          <div #mapContainer class="map-container rounded border" style="height:300px;"></div>
+          <small class="text-muted d-block mt-1">انقر على الخريطة لتحديد موقع المبنى بالإحداثيات</small>
+        </div>
+
         <div class="col-md-6">
           <label class="form-label">خط العرض</label>
           <input type="number" class="form-control" formControlName="latitude" step="0.000001" readonly>
@@ -148,15 +114,121 @@
           <label class="form-label">خط الطول</label>
           <input type="number" class="form-control" formControlName="longitude" step="0.000001" readonly>
         </div>
+
       </div>
+    </div>
+  </div>
 
-      <hr class="my-4">
+  <!-- ── Section 3: Images & Documents ────────────────────── -->
+  <div class="card mb-3">
+    <div class="card-header fw-bold">
+      <i class="bi bi-folder2-open me-2 text-brand"></i> الصور والمستندات
+    </div>
+    <div class="card-body">
+      <div class="row g-4">
 
-      <!-- ===== Section 4: Unit Counts ===== -->
-      <h5 class="section-title mb-3">
-        <i class="bi bi-building"></i> أعداد الوحدات حسب النوع
-      </h5>
-      <div class="row g-3 mb-4">
+        <!-- Building Photo -->
+        <div class="col-md-6">
+          <label class="form-label">صورة المبنى</label>
+          <div *ngIf="!buildingImagePreview">
+            <input type="file" class="form-control" accept="image/*" (change)="onBuildingImageSelected($event)">
+          </div>
+          <div *ngIf="buildingImagePreview" class="position-relative d-inline-block">
+            <img [src]="buildingImagePreview" alt="صورة المبنى" class="img-thumbnail" style="max-height:150px;">
+            <button type="button" class="btn btn-sm btn-danger position-absolute top-0 start-0"
+              (click)="removeImage('building')"><i class="bi bi-x-lg"></i></button>
+          </div>
+        </div>
+
+        <!-- Deed Image -->
+        <div class="col-md-6">
+          <label class="form-label">صورة صك المبنى</label>
+          <div *ngIf="!deedImagePreview">
+            <input type="file" class="form-control" accept="image/*,application/pdf" (change)="onDeedImageSelected($event)">
+          </div>
+          <div *ngIf="deedImagePreview" class="position-relative d-inline-block">
+            <img [src]="deedImagePreview" alt="صورة الصك" class="img-thumbnail" style="max-height:150px;">
+            <button type="button" class="btn btn-sm btn-danger position-absolute top-0 start-0"
+              (click)="removeImage('deed')"><i class="bi bi-x-lg"></i></button>
+          </div>
+        </div>
+
+        <!-- Building License -->
+        <div class="col-md-6">
+          <label class="form-label"><i class="bi bi-file-earmark-check text-success me-1"></i> رخصة البناء</label>
+          <div *ngIf="!buildingLicenseFile">
+            <input type="file" class="form-control" accept=".pdf,image/*"
+              (change)="onDocumentSelected($event, 'license')">
+          </div>
+          <div *ngIf="buildingLicenseFile" class="d-flex align-items-center gap-2 p-2 border rounded bg-light">
+            <i class="bi bi-file-earmark-pdf text-danger fs-4"></i>
+            <span class="small flex-grow-1 text-truncate">{{ buildingLicenseFile.name }}</span>
+            <button type="button" class="btn btn-sm btn-outline-danger" (click)="removeDocument('license')">
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Building Plan -->
+        <div class="col-md-6">
+          <label class="form-label"><i class="bi bi-grid-1x2 text-primary me-1"></i> مخططات البناء</label>
+          <div *ngIf="!buildingPlanFile">
+            <input type="file" class="form-control" accept=".pdf,image/*"
+              (change)="onDocumentSelected($event, 'plan')">
+          </div>
+          <div *ngIf="buildingPlanFile" class="d-flex align-items-center gap-2 p-2 border rounded bg-light">
+            <i class="bi bi-file-earmark-pdf text-danger fs-4"></i>
+            <span class="small flex-grow-1 text-truncate">{{ buildingPlanFile.name }}</span>
+            <button type="button" class="btn btn-sm btn-outline-danger" (click)="removeDocument('plan')">
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Real Estate Authority Deed -->
+        <div class="col-md-6">
+          <label class="form-label"><i class="bi bi-bank text-warning me-1"></i> ملف صك الهيئة العامة للعقار</label>
+          <div *ngIf="!realEstateAuthorityDeedFile">
+            <input type="file" class="form-control" accept=".pdf,image/*"
+              (change)="onDocumentSelected($event, 'deed')">
+          </div>
+          <div *ngIf="realEstateAuthorityDeedFile" class="d-flex align-items-center gap-2 p-2 border rounded bg-light">
+            <i class="bi bi-file-earmark-pdf text-danger fs-4"></i>
+            <span class="small flex-grow-1 text-truncate">{{ realEstateAuthorityDeedFile.name }}</span>
+            <button type="button" class="btn btn-sm btn-outline-danger" (click)="removeDocument('deed')">
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Other Documents -->
+        <div class="col-md-6">
+          <label class="form-label"><i class="bi bi-paperclip me-1"></i> مستندات أخرى</label>
+          <input type="file" class="form-control" accept=".pdf,image/*" multiple
+            (change)="onOtherDocumentSelected($event)">
+          <div *ngIf="otherDocumentFiles.length" class="mt-2">
+            <div *ngFor="let doc of otherDocumentFiles; let i = index"
+              class="d-flex align-items-center gap-2 p-2 border rounded bg-light mb-1">
+              <i class="bi bi-file-earmark text-muted"></i>
+              <span class="small flex-grow-1 text-truncate">{{ doc.name }}</span>
+              <button type="button" class="btn btn-sm btn-outline-danger" (click)="removeOtherDocument(i)">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Section 4: Unit Counts ────────────────────────────── -->
+  <div class="card mb-3">
+    <div class="card-header fw-bold">
+      <i class="bi bi-building me-2 text-brand"></i> أعداد الوحدات حسب النوع
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
         <div class="col-md-4 col-6">
           <label class="form-label">عدد الشقق</label>
           <input type="number" class="form-control" formControlName="apartmentCount" min="0" placeholder="0">
@@ -178,14 +250,16 @@
           <input type="number" class="form-control" formControlName="servicedApartmentCount" min="0" placeholder="0">
         </div>
       </div>
+    </div>
+  </div>
 
-      <hr class="my-4">
-
-      <!-- ===== Section 5: Guard Info ===== -->
-      <h5 class="section-title mb-3">
-        <i class="bi bi-person-badge"></i> معلومات الحارس
-      </h5>
-      <div class="row g-3 mb-4">
+  <!-- ── Section 5: Guard & Water Meter ──────────────────────── -->
+  <div class="card mb-3">
+    <div class="card-header fw-bold">
+      <i class="bi bi-person-badge me-2 text-brand"></i> معلومات الحارس وعداد المياه
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
         <div class="col-md-6">
           <label class="form-label">اسم الحارس</label>
           <input type="text" class="form-control" formControlName="guardName" placeholder="اسم حارس المبنى">
@@ -194,115 +268,111 @@
           <label class="form-label">رقم الحارس</label>
           <input type="tel" class="form-control" formControlName="guardPhone" placeholder="05XXXXXXXX">
         </div>
+        <div class="col-md-6">
+          <label class="form-label"><i class="bi bi-droplet text-info me-1"></i> رقم عداد المياه</label>
+          <input type="text" class="form-control" formControlName="waterMeterNumber" placeholder="أدخل رقم عداد المياه">
+        </div>
       </div>
+    </div>
+  </div>
 
-      <hr class="my-4">
+  <!-- ── Section 6: Management ─────────────────────────────── -->
+  <div class="card mb-3">
+    <div class="card-header fw-bold">
+      <i class="bi bi-people me-2 text-brand"></i> إدارة المبنى
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
 
-      <!-- ===== Section 6: Management ===== -->
-      <h5 class="section-title mb-3">
-        <i class="bi bi-people"></i> إدارة المبنى
-      </h5>
-      <div class="row g-3 mb-4">
         <div class="col-md-6">
           <label class="form-label">مسؤول المبنى مع المالك</label>
           <input type="text" class="form-control" formControlName="ownerManagerName"
             placeholder="اسم المسؤول عن التواصل مع المالك">
-          <small class="text-muted">يتم التعديل من قبل مدير النظام</small>
         </div>
+
+        <!-- Renter Manager — multi-select from Employee users -->
         <div class="col-md-6">
-          <label class="form-label">مسؤول المبنى مع المستأجرين</label>
-          <input type="text" class="form-control" formControlName="renterManagerName"
-            placeholder="اسم المسؤول عن التواصل مع المستأجرين">
+          <label class="form-label">مسؤولو المبنى مع المستأجرين</label>
+          <div *ngIf="employeeUsers.length === 0" class="alert alert-warning py-2 small">
+            لا يوجد موظفون مضافون في النظام. أضف مستخدماً بدور "موظف" أولاً من إدارة المستخدمين.
+          </div>
+          <div *ngIf="employeeUsers.length > 0" class="border rounded p-2" style="max-height:160px;overflow-y:auto;">
+            <div *ngFor="let emp of employeeUsers" class="form-check">
+              <input type="checkbox" class="form-check-input"
+                [id]="'mgr-' + emp.id"
+                [checked]="isManagerSelected(emp.id)"
+                (change)="toggleManager(emp.id)">
+              <label class="form-check-label" [for]="'mgr-' + emp.id">
+                {{ emp.username }}
+              </label>
+            </div>
+          </div>
+          <small *ngIf="selectedRenterManagerIds.length" class="text-muted">
+            المحددون: {{ getManagerNames() }}
+          </small>
         </div>
+
       </div>
+    </div>
+  </div>
 
-      <hr class="my-4">
-
-      <!-- ===== Section 7: Electricity Meters ===== -->
-      <h5 class="section-title mb-3">
-        <i class="bi bi-lightning"></i> عدادات الكهرباء
-      </h5>
-      <div class="mb-4">
-        <!-- Meters List -->
-        <div *ngFor="let meter of metersArray.controls; let i = index" class="meter-card card mb-3">
-          <div class="card-body" [formGroupName]="i">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-              <h6 class="mb-0">عداد #{{ i + 1 }}</h6>
-              <button type="button" class="btn btn-sm btn-outline-danger" (click)="removeMeter(i)">
-                <i class="bi bi-trash"></i> حذف
-              </button>
+  <!-- ── Section 7: Electricity Meters ───────────────────────── -->
+  <div class="card mb-3">
+    <div class="card-header fw-bold">
+      <i class="bi bi-lightning me-2 text-brand"></i> عدادات الكهرباء
+    </div>
+    <div class="card-body">
+      <div formArrayName="electricityMeters">
+      <div *ngFor="let meter of metersArray.controls; let i = index" class="card mb-3 border-secondary">
+        <div class="card-body" [formGroupName]="i">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="mb-0">عداد #{{ i + 1 }}</h6>
+            <button type="button" class="btn btn-sm btn-outline-danger" (click)="removeMeter(i)">
+              <i class="bi bi-trash"></i> حذف
+            </button>
+          </div>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">رقم العداد <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" formControlName="meterNumber" placeholder="أدخل رقم العداد">
             </div>
-
-            <div class="row g-3">
-              <!-- Meter Number -->
-              <div class="col-md-6">
-                <label class="form-label">رقم العداد <span class="text-danger">*</span></label>
-                <input type="text" class="form-control" formControlName="meterNumber"
-                  placeholder="أدخل رقم العداد"
-                  [ngClass]="{'is-invalid': metersArray.at(i).get('meterNumber')?.touched && metersArray.at(i).get('meterNumber')?.invalid}">
-                <div class="invalid-feedback">رقم العداد مطلوب</div>
-              </div>
-
-              <!-- Meter Type -->
-              <div class="col-md-6">
-                <label class="form-label">نوع العداد <span class="text-danger">*</span></label>
-                <select class="form-select" formControlName="type">
-                  <option *ngFor="let type of meterTypes" [value]="type">
-                    {{ getMeterTypeLabel(type) }}
-                  </option>
-                </select>
-              </div>
+            <div class="col-md-6">
+              <label class="form-label">نوع العداد</label>
+              <select class="form-select" formControlName="type">
+                <option *ngFor="let type of meterTypes" [value]="type">{{ getMeterTypeLabel(type) }}</option>
+              </select>
             </div>
-
-            <!-- Shared Meter Warning & Unit Selection -->
-            <div *ngIf="isSharedMeter(i)" class="mt-3">
-              <div class="alert alert-warning d-flex align-items-center" role="alert">
-                <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                <div>
-                  هذا العداد مشترك
-                  <span *ngIf="getLinkedUnitNames(i)"> مع الوحدات: <strong>{{ getLinkedUnitNames(i) }}</strong></span>
-                </div>
-              </div>
-
-              <!-- Unit selection for shared meters (only in edit mode with existing units) -->
-              <div *ngIf="buildingUnits.length > 0" class="mt-2">
-                <label class="form-label">اختر الوحدات المشتركة في هذا العداد:</label>
-                <div class="units-checklist">
-                  <div *ngFor="let unit of buildingUnits" class="form-check">
-                    <input class="form-check-input" type="checkbox"
-                      [id]="'meter-' + i + '-unit-' + unit.id"
-                      [checked]="isUnitLinked(i, unit.id)"
-                      (change)="toggleUnitLink(i, unit.id)">
-                    <label class="form-check-label" [for]="'meter-' + i + '-unit-' + unit.id">
-                      {{ unit.unitCode }} - {{ unit.type }}
-                    </label>
-                  </div>
-                </div>
-              </div>
-              <div *ngIf="buildingUnits.length === 0 && isEditMode" class="text-muted small mt-1">
-                لا توجد وحدات في هذا المبنى بعد. يمكنك ربط الوحدات لاحقاً بعد إضافتها.
-              </div>
+          </div>
+          <div *ngIf="isSharedMeter(i)" class="mt-3">
+            <div class="alert alert-warning small">عداد مشترك — اختر الوحدات المشتركة:</div>
+            <div *ngFor="let unit of buildingUnits" class="form-check form-check-inline">
+              <input class="form-check-input" type="checkbox"
+                [id]="'m' + i + 'u' + unit.id"
+                [checked]="isUnitLinked(i, unit.id)"
+                (change)="toggleUnitLink(i, unit.id)">
+              <label class="form-check-label" [for]="'m' + i + 'u' + unit.id">{{ unit.unitCode }}</label>
             </div>
           </div>
         </div>
-
-        <!-- Add Meter Button -->
-        <button type="button" class="btn btn-outline-brand" (click)="addMeter()">
-          <i class="bi bi-plus-lg me-1"></i> إضافة عداد كهرباء
-        </button>
       </div>
+      </div><!-- end formArrayName="electricityMeters" -->
 
-      <!-- ===== Actions ===== -->
-      <div class="mt-4 d-flex gap-2">
-        <button type="submit" class="btn btn-brand" [disabled]="loading">
-          <span *ngIf="loading" class="spinner-border spinner-border-sm me-1"></span>
-          <i *ngIf="!loading" class="bi bi-check-lg me-1"></i>
-          {{ isEditMode ? 'حفظ التعديلات' : 'إضافة المبنى' }}
-        </button>
-        <button type="button" class="btn btn-secondary" (click)="cancel()">
-          إلغاء
-        </button>
-      </div>
-    </form>
+      <button type="button" class="btn btn-outline-brand" (click)="addMeter()">
+        <i class="bi bi-plus-lg me-1"></i> إضافة عداد كهرباء
+      </button>
+    </div>
   </div>
-</div>
+
+  <!-- ── Actions ────────────────────────────────────────────── -->
+  <div class="card">
+    <div class="card-body d-flex gap-2 justify-content-end">
+      <button type="button" class="btn btn-secondary" (click)="cancel()">إلغاء</button>
+      <button type="submit" class="btn btn-brand" [disabled]="loading">
+        <span *ngIf="loading" class="spinner-border spinner-border-sm me-1"></span>
+        <i *ngIf="!loading" class="bi bi-check-lg me-1"></i>
+        {{ isEditMode ? 'حفظ التعديلات' : 'إضافة المبنى' }}
+      </button>
+    </div>
+  </div>
+
+</form>

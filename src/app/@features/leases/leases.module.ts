@@ -12,6 +12,10 @@ const routes: Routes = [
     loadComponent: () => import('./lease-wizard/lease-wizard.component').then(m => m.LeaseWizardComponent)
   },
   {
+    path: 'owner-contracts',
+    loadComponent: () => import('./owner-contracts/owner-contracts.component').then(m => m.OwnerContractsComponent)
+  },
+  {
     path: ':id',
     loadComponent: () => import('./lease-detail/lease-detail.component').then(m => m.LeaseDetailComponent)
   }

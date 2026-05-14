@@ -11,8 +11,15 @@ export interface Renter {
   // Identity
   idType: RenterIdType;
   nationalId?: string;          // رقم الهوية / الإقامة / السجل التجاري
+  idExpiryDate?: Date;          // تاريخ انتهاء الوثيقة
   nationality?: string;
   birthDate?: Date;             // تاريخ الميلاد ميلادي
+
+  // Commercial Registration extra fields (only when idType = CommercialRecord)
+  representativeId?: string;            // رقم هوية الممثل
+  commercialRecordExpiryDate?: Date;    // تاريخ انتهاء السجل التجاري
+  representativeName?: string;          // اسم الممثل
+  representativeBirthDate?: Date;       // تاريخ ميلاد الممثل
 
   // Personal
   maritalStatus?: MaritalStatus;
@@ -42,9 +49,11 @@ export interface Renter {
 }
 
 export enum RenterIdType {
-  Identity = 'Identity',               // هوية وطنية
-  Residency = 'Residency',             // إقامة
-  CommercialRecord = 'CommercialRecord' // سجل تجاري
+  Identity = 'Identity',                  // هوية وطنية
+  Residency = 'Residency',               // إقامة
+  PremiumResidency = 'PremiumResidency', // إقامة مميزة
+  GCC = 'GCC',                           // دول مجلس التعاون الخليجي
+  CommercialRecord = 'CommercialRecord'  // سجل تجاري
 }
 
 export enum MaritalStatus {
@@ -57,8 +66,13 @@ export interface CreateRenterDto {
   phone: string;
   idType: RenterIdType;
   nationalId?: string;
+  idExpiryDate?: Date;
   nationality?: string;
   birthDate?: Date;
+  representativeId?: string;
+  commercialRecordExpiryDate?: Date;
+  representativeName?: string;
+  representativeBirthDate?: Date;
   maritalStatus?: MaritalStatus;
   familyMemberCount?: number;
   employer?: string;

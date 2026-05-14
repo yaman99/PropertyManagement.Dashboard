@@ -3,7 +3,8 @@ import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import {
   Lease, CreateLeaseDto, UpdateLeaseDto, LeaseStatus,
-  generatePaymentSchedule, calculateEndDate, calculateCommission
+  generatePaymentSchedule, calculateEndDate, calculateCommission,
+  calculateCommissionBreakdown
 } from '../../domain/models';
 import { LeasesRepository } from '../interfaces';
 import { LocalStorageService } from './local-storage.service';
@@ -43,8 +44,9 @@ export class LeasesLocalStorageRepository implements LeasesRepository {
     const leases = this.storage.getItem<Lease[]>(this.STORAGE_KEY) || [];
 
     const startDate = new Date(dto.startDate);
-    const endDate = calculateEndDate(startDate, dto.contractDuration);
-    const rentalCommission = calculateCommission(
+    const customEndDate = dto.endDate ? new Date(dto.endDate) : undefined;
+    const endDate = customEndDate || calculateEndDate(startDate, dto.contractDuration);
+    const commissionBreakdown = calculateCommissionBreakdown(
       dto.totalContractValue,
       dto.commissionPercentage,
       dto.commissionDiscount || 0
@@ -53,7 +55,8 @@ export class LeasesLocalStorageRepository implements LeasesRepository {
       startDate,
       dto.totalContractValue,
       dto.paymentCycle,
-      dto.contractDuration
+      dto.contractDuration,
+      customEndDate
     );
 
     const newLease: Lease = {
@@ -69,7 +72,9 @@ export class LeasesLocalStorageRepository implements LeasesRepository {
       totalContractValue: dto.totalContractValue,
       depositAmount: dto.depositAmount || 0,
       commissionPercentage: dto.commissionPercentage,
-      rentalCommission,
+      rentalCommission: commissionBreakdown.net,
+      commissionVat: commissionBreakdown.vat,
+      commissionTotal: commissionBreakdown.total,
       commissionDiscount: dto.commissionDiscount || 0,
       depositPaid: false,
       commissionPaid: false,

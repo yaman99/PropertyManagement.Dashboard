@@ -26,6 +26,9 @@ export interface Unit {
   // Financial
   rentPrice: number;
 
+  // Meters
+  electricityMeterNumber?: string;  // رقم عداد الكهرباء
+
   // Status
   status: UnitStatus;
   isPublished: boolean;  // Controls visibility on public pages
@@ -69,6 +72,7 @@ export interface CreateUnitDto {
   floor?: number;
   areaSqm?: number;
   rentPrice: number;
+  electricityMeterNumber?: string;
   isPublished?: boolean;
 }
 

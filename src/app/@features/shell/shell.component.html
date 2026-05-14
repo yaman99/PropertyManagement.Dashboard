@@ -40,8 +40,12 @@
         <a [routerLink]="['/app/owners']" routerLinkActive="active" class="nav-link">
           👤 الملاك
         </a>
-        <a [routerLink]="['/app/buildings']" routerLinkActive="active" class="nav-link">
+        <a [routerLink]="['/app/buildings']" routerLinkActive="active" class="nav-link"
+          [routerLinkActiveOptions]="{exact: true}">
           🏗️ المباني
+        </a>
+        <a [routerLink]="['/app/buildings/map']" routerLinkActive="active" class="nav-link ps-5 small">
+          <i class="bi bi-map me-1"></i> خريطة المباني
         </a>
         <a [routerLink]="['/app/units']" routerLinkActive="active" class="nav-link">
           🏢 الوحدات
@@ -49,8 +53,12 @@
         <a [routerLink]="['/app/renters']" routerLinkActive="active" class="nav-link">
           🔑 المستأجرون
         </a>
-        <a [routerLink]="['/app/leases']" routerLinkActive="active" class="nav-link">
+        <a [routerLink]="['/app/leases']" routerLinkActive="active" class="nav-link"
+          [routerLinkActiveOptions]="{exact: true}">
           📄 عقود الإيجار
+        </a>
+        <a [routerLink]="['/app/leases/owner-contracts']" routerLinkActive="active" class="nav-link ps-5 small">
+          <i class="bi bi-file-earmark-text me-1"></i> عقود الملاك
         </a>
         <a [routerLink]="['/app/requests']" routerLinkActive="active" class="nav-link">
           📋 الطلبات والشكاوى

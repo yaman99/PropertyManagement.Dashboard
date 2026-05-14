@@ -10,6 +10,7 @@ import { Building } from '../../../@core/domain/models/building.model';
 import { UnitsActions, UnitsState } from '../../../@core/state/units.state';
 import { OwnersActions, OwnersState } from '../../../@core/state/owners.state';
 import { BuildingsState, LoadBuildings } from '../../../@core/state/buildings.state';
+import { AuthState } from '../../../@core/state/auth.state';
 import { PageHeaderComponent } from '../../../@shared/components/page-header/page-header.component';
 import { AlertService } from '../../../@shared/services/alert.service';
 
@@ -36,12 +37,18 @@ export class UnitFormComponent implements OnInit {
   preselectedBuildingId: string | null = null;
 
   owners$: Observable<Owner[]>;
+  independentOwners$: Observable<Owner[]>;   // Only isIndependent = true
   buildings$: Observable<BuildingWithOwner[]>;
   unitTypes = Object.values(UnitType);
   unitStatuses = Object.values(UnitStatus);
   ownershipTypes = Object.values(OwnershipType);
 
   selectedBuilding: BuildingWithOwner | null = null;
+
+  get isAdmin(): boolean {
+    const user = this.store.selectSnapshot(AuthState.user);
+    return user?.role === 'Admin';
+  }
 
   constructor(
     private fb: FormBuilder,
@@ -51,6 +58,9 @@ export class UnitFormComponent implements OnInit {
     private alertService: AlertService
   ) {
     this.owners$ = this.store.select(OwnersState.owners);
+    this.independentOwners$ = this.store.select(OwnersState.owners).pipe(
+      map(owners => owners.filter(o => o.isIndependent))
+    );
 
     // Combine buildings with owners to get owner names
     this.buildings$ = combineLatest([
@@ -77,7 +87,8 @@ export class UnitFormComponent implements OnInit {
       rooms: [null, [Validators.min(0)]],
       areaSqm: [null, [Validators.min(1)]],
       rentPrice: [null, [Validators.required, Validators.min(1)]],
-      isPublished: [false]
+      electricityMeterNumber: [''],
+      isPublished: [true]   // Default ON; admin-only to turn off
     });
 
     // Update validators based on ownership type

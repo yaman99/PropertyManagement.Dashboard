@@ -8,39 +8,30 @@
   [showActions]="false">
 </app-page-header>
 
-<div class="card" dir="rtl">
-  <div class="card-body">
-    <form [formGroup]="renterForm" (ngSubmit)="onSubmit()">
-      <!-- Personal Info -->
-      <h5 class="mb-3 text-brand">المعلومات الشخصية</h5>
-      <div class="row g-3 mb-4">
-        <!-- Full Name -->
+<form [formGroup]="renterForm" (ngSubmit)="onSubmit()" dir="rtl">
+
+  <!-- ── Section 1: Personal Info ─────────────────────────── -->
+  <div class="card mb-3">
+    <div class="card-header fw-bold">
+      <i class="bi bi-person-fill me-2 text-brand"></i> المعلومات الشخصية
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
+
         <div class="col-md-6">
           <label class="form-label">الاسم الكامل <span class="text-danger">*</span></label>
-          <input
-            type="text"
-            class="form-control"
-            formControlName="fullName"
+          <input type="text" class="form-control" formControlName="fullName"
             [class.is-invalid]="renterForm.get('fullName')?.invalid && renterForm.get('fullName')?.touched"
             placeholder="أدخل الاسم الكامل">
-          <div class="invalid-feedback">
-            {{ getErrorMessage('fullName') }}
-          </div>
+          <div class="invalid-feedback">{{ getErrorMessage('fullName') }}</div>
         </div>
 
-        <!-- Phone -->
         <div class="col-md-6">
           <label class="form-label">رقم الجوال <span class="text-danger">*</span></label>
-          <input
-            type="tel"
-            class="form-control"
-            formControlName="phone"
+          <input type="tel" class="form-control" formControlName="phone"
             [class.is-invalid]="renterForm.get('phone')?.invalid && renterForm.get('phone')?.touched"
-            placeholder="05xxxxxxxx"
-            maxlength="10">
-          <div class="invalid-feedback">
-            {{ getErrorMessage('phone') }}
-          </div>
+            placeholder="05xxxxxxxx" maxlength="10">
+          <div class="invalid-feedback">{{ getErrorMessage('phone') }}</div>
         </div>
 
         <!-- ID Type -->
@@ -51,38 +42,59 @@
           </select>
         </div>
 
-        <!-- National ID / Residency / Commercial Record -->
+        <!-- ID Number -->
         <div class="col-md-4">
-          <label class="form-label">رقم الوثيقة</label>
-          <input
-            type="text"
-            class="form-control"
-            formControlName="nationalId"
-            [class.is-invalid]="renterForm.get('nationalId')?.invalid && renterForm.get('nationalId')?.touched"
-            placeholder="1234567890"
-            maxlength="10">
-          <div class="invalid-feedback">
-            {{ getErrorMessage('nationalId') }}
-          </div>
+          <label class="form-label">{{ getIdLabel() }}</label>
+          <input type="text" class="form-control" formControlName="nationalId" placeholder="أدخل رقم الوثيقة">
         </div>
+
+        <!-- ID Expiry Date -->
+        <div class="col-md-4">
+          <label class="form-label">تاريخ انتهاء الوثيقة</label>
+          <input type="date" class="form-control" formControlName="idExpiryDate">
+        </div>
+
+        <!-- ── Commercial Registration extra fields ── -->
+        <ng-container *ngIf="isCommercialRecord">
+          <div class="col-12">
+            <div class="alert alert-info py-2 small mb-0">
+              <i class="bi bi-info-circle me-1"></i> بيانات إضافية مطلوبة للسجل التجاري
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">تاريخ انتهاء السجل التجاري</label>
+            <input type="date" class="form-control" formControlName="commercialRecordExpiryDate">
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">رقم هوية الممثل</label>
+            <input type="text" class="form-control" formControlName="representativeId"
+              placeholder="رقم هوية ممثل السجل التجاري">
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">اسم الممثل</label>
+            <input type="text" class="form-control" formControlName="representativeName"
+              placeholder="الاسم الكامل للممثل">
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">تاريخ ميلاد الممثل</label>
+            <input type="date" class="form-control" formControlName="representativeBirthDate">
+          </div>
+        </ng-container>
 
         <!-- Nationality -->
         <div class="col-md-4">
           <label class="form-label">الجنسية</label>
-          <input
-            type="text"
-            class="form-control"
-            formControlName="nationality"
-            placeholder="مثال: سعودي">
+          <input type="text" class="form-control" formControlName="nationality" placeholder="مثال: سعودي">
         </div>
 
         <!-- Birth Date -->
         <div class="col-md-4">
           <label class="form-label">تاريخ الميلاد (ميلادي)</label>
-          <input
-            type="date"
-            class="form-control"
-            formControlName="birthDate">
+          <input type="date" class="form-control" formControlName="birthDate">
         </div>
 
         <!-- Marital Status -->
@@ -94,87 +106,66 @@
           </select>
         </div>
 
-        <!-- Family Member Count (only if married) -->
+        <!-- Family Count -->
         <div class="col-md-4" *ngIf="isMarried">
           <label class="form-label">عدد أفراد الأسرة</label>
-          <input
-            type="number"
-            class="form-control"
-            formControlName="familyMemberCount"
-            min="1"
-            placeholder="عدد الأفراد">
+          <input type="number" class="form-control" formControlName="familyMemberCount" min="1">
         </div>
-      </div>
 
-      <!-- Work Info -->
-      <h5 class="mb-3 text-brand">معلومات العمل</h5>
-      <div class="row g-3 mb-4">
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Section 2: Work & Emergency ──────────────────────── -->
+  <div class="card mb-3">
+    <div class="card-header fw-bold">
+      <i class="bi bi-briefcase me-2 text-brand"></i> معلومات العمل والطوارئ
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
         <div class="col-md-12">
           <label class="form-label">جهة العمل</label>
-          <input
-            type="text"
-            class="form-control"
-            formControlName="employer"
+          <input type="text" class="form-control" formControlName="employer"
             placeholder="اسم الشركة أو جهة العمل">
         </div>
-      </div>
-
-      <!-- Emergency Contact -->
-      <h5 class="mb-3 text-brand">جهة اتصال الطوارئ</h5>
-      <div class="row g-3 mb-4">
         <div class="col-md-6">
-          <label class="form-label">اسم جهة الاتصال</label>
-          <input
-            type="text"
-            class="form-control"
-            formControlName="emergencyContact"
-            placeholder="اسم الشخص">
+          <label class="form-label">اسم جهة اتصال الطوارئ</label>
+          <input type="text" class="form-control" formControlName="emergencyContact" placeholder="اسم الشخص">
         </div>
-
         <div class="col-md-6">
-          <label class="form-label">رقم الهاتف</label>
-          <input
-            type="tel"
-            class="form-control"
-            formControlName="emergencyPhone"
+          <label class="form-label">رقم هاتف الطوارئ</label>
+          <input type="tel" class="form-control" formControlName="emergencyPhone"
             [class.is-invalid]="renterForm.get('emergencyPhone')?.invalid && renterForm.get('emergencyPhone')?.touched"
-            placeholder="05xxxxxxxx"
-            maxlength="10">
-          <div class="invalid-feedback">
-            {{ getErrorMessage('emergencyPhone') }}
-          </div>
+            placeholder="05xxxxxxxx" maxlength="10">
+          <div class="invalid-feedback">{{ getErrorMessage('emergencyPhone') }}</div>
         </div>
-      </div>
-
-      <!-- Notes -->
-      <h5 class="mb-3 text-brand">ملاحظات</h5>
-      <div class="row g-3 mb-4">
-        <div class="col-md-12">
+        <div class="col-12">
           <label class="form-label">ملاحظات</label>
-          <textarea
-            class="form-control"
-            formControlName="notes"
-            rows="3"
-            placeholder="أدخل أي ملاحظات إضافية"></textarea>
+          <textarea class="form-control" formControlName="notes" rows="3"
+            placeholder="أي ملاحظات إضافية"></textarea>
         </div>
       </div>
+    </div>
+  </div>
 
-      <hr class="my-4">
-
-      <!-- Actions -->
+  <!-- ── Actions ────────────────────────────────────────────── -->
+  <div class="card">
+    <div class="card-body">
       <div class="d-flex justify-content-end gap-2">
-        <button type="button" class="btn btn-secondary" (click)="cancel()" [disabled]="loading">
-          إلغاء
-        </button>
+        <button type="button" class="btn btn-secondary" (click)="cancel()" [disabled]="loading">إلغاء</button>
         <button type="submit" class="btn btn-brand" [disabled]="loading">
           <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
           {{ isEditMode ? 'حفظ التعديلات' : 'إضافة المستأجر' }}
         </button>
       </div>
 
-      <div *ngIf="!isEditMode" class="alert alert-info mt-3" role="alert">
-        <strong>ملاحظة:</strong> عند إضافة مستأجر جديد، سيتم إنشاء حساب خاص به تلقائياً وستظهر بيانات الدخول في نافذة منبثقة.
+      <div *ngIf="!isEditMode" class="alert alert-info mt-3 mb-0">
+        <i class="bi bi-info-circle me-2"></i>
+        سيتم إنشاء حساب للمستأجر تلقائياً:
+        <strong>اسم المستخدم = رقم الهوية</strong> |
+        <strong>كلمة المرور = رقم الجوال</strong>
       </div>
-    </form>
+    </div>
   </div>
-</div>
+
+</form>

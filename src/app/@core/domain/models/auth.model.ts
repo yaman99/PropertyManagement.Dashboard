@@ -22,7 +22,7 @@ export interface User {
   updatedAt: Date;
 }
 
-export type UserRole = 'Admin' | 'Accountant' | 'Owner' | 'Renter';
+export type UserRole = 'Admin' | 'Accountant' | 'Owner' | 'Renter' | 'Employee';
 
 export enum Permission {
   // Owners

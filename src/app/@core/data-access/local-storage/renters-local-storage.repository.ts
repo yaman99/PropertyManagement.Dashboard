@@ -32,8 +32,9 @@ export class RentersLocalStorageRepository implements RentersRepository {
       ...dto,
       isBlacklisted: false,
       role: 'Renter',
-      username: dto.hasAccount ? this.generateUsername(dto.fullName) : undefined,
-      tempPassword: dto.hasAccount ? this.generateTempPassword() : undefined,
+      // username = national ID, password = phone number
+      username: dto.hasAccount ? (dto.nationalId || this.generateUsername(dto.fullName)) : undefined,
+      tempPassword: dto.hasAccount ? (dto.phone || this.generateTempPassword()) : undefined,
       tempPasswordSentAt: dto.hasAccount ? new Date() : undefined,
       createdAt: new Date(),
       updatedAt: new Date()

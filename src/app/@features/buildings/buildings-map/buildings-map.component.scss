@@ -1,0 +1,107 @@
+.map-layout {
+  display: flex;
+  height: calc(100vh - 180px);
+  gap: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.buildings-sidebar {
+  width: 280px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  background: white;
+  border-left: 1px solid #dee2e6;
+}
+
+.sidebar-header {
+  padding: 1rem;
+  background: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+  font-size: 14px;
+}
+
+.buildings-list {
+  overflow-y: auto;
+  flex: 1;
+}
+
+.building-item {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+  transition: background 0.15s;
+  font-size: 13px;
+
+  &:hover { background: #f8f9fa; }
+  &.active { background: rgba(188, 133, 69, 0.1); border-right: 3px solid #BC8545; }
+}
+
+.map-area {
+  flex: 1;
+  position: relative;
+}
+
+.main-map {
+  width: 100%;
+  height: 100%;
+}
+
+.building-info-panel {
+  position: absolute;
+  bottom: 1.5rem;
+  right: 1rem;
+  background: white;
+  border-radius: 10px;
+  padding: 1rem;
+  width: 280px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  z-index: 1000;
+}
+
+:global(.map-marker-icon) {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  background: #BC8545;
+  border: 3px solid white;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.4);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+
+  &:hover {
+    background: #9a6c35;
+    box-shadow: 0 5px 16px rgba(0,0,0,0.5);
+  }
+
+  i {
+    transform: rotate(45deg);
+    color: white;
+    font-size: 22px;
+  }
+
+  .marker-label {
+    position: absolute;
+    bottom: -28px;
+    right: -20px;
+    transform: rotate(45deg);
+    background: rgba(0,0,0,0.75);
+    color: white;
+    font-size: 10px;
+    font-family: 'Cairo', sans-serif;
+    white-space: nowrap;
+    padding: 2px 6px;
+    border-radius: 3px;
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    pointer-events: none;
+  }
+}

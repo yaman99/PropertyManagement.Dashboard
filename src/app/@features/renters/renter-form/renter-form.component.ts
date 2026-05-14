@@ -26,15 +26,19 @@ export class RenterFormComponent implements OnInit {
   loading = false;
 
   idTypes = [
-    { value: RenterIdType.Identity, label: 'هوية وطنية' },
-    { value: RenterIdType.Residency, label: 'إقامة' },
-    { value: RenterIdType.CommercialRecord, label: 'سجل تجاري' }
+    { value: RenterIdType.Identity,          label: 'هوية وطنية' },
+    { value: RenterIdType.Residency,         label: 'إقامة' },
+    { value: RenterIdType.PremiumResidency,  label: 'إقامة مميزة' },
+    { value: RenterIdType.GCC,               label: 'دول مجلس التعاون الخليجي' },
+    { value: RenterIdType.CommercialRecord,  label: 'سجل تجاري' }
   ];
 
   maritalStatuses = [
-    { value: MaritalStatus.Single, label: 'أعزب' },
+    { value: MaritalStatus.Single,  label: 'أعزب' },
     { value: MaritalStatus.Married, label: 'متزوج' }
   ];
+
+  RenterIdType = RenterIdType;
 
   constructor(
     private fb: FormBuilder,
@@ -47,9 +51,17 @@ export class RenterFormComponent implements OnInit {
       fullName: ['', [Validators.required, Validators.minLength(3)]],
       phone: ['', [Validators.required, Validators.pattern(/^05\d{8}$/)]],
       idType: [RenterIdType.Identity, Validators.required],
-      nationalId: ['', [Validators.pattern(/^\d{10}$/)]],
+      nationalId: [''],
+      idExpiryDate: [''],
       nationality: [''],
       birthDate: [''],
+
+      // Commercial Registration fields (shown only when idType = CommercialRecord)
+      representativeId: [''],
+      commercialRecordExpiryDate: [''],
+      representativeName: [''],
+      representativeBirthDate: [''],
+
       maritalStatus: [null],
       familyMemberCount: [null],
       employer: [''],
@@ -58,7 +70,7 @@ export class RenterFormComponent implements OnInit {
       notes: ['']
     });
 
-    // Listen to maritalStatus changes to show/hide familyMemberCount
+    // Show/hide family count
     this.renterForm.get('maritalStatus')?.valueChanges.subscribe(status => {
       if (status === MaritalStatus.Married) {
         this.renterForm.get('familyMemberCount')?.enable();
@@ -71,6 +83,25 @@ export class RenterFormComponent implements OnInit {
 
   get isMarried(): boolean {
     return this.renterForm.get('maritalStatus')?.value === MaritalStatus.Married;
+  }
+
+  get isCommercialRecord(): boolean {
+    return this.renterForm.get('idType')?.value === RenterIdType.CommercialRecord;
+  }
+
+  get currentIdType(): RenterIdType {
+    return this.renterForm.get('idType')?.value;
+  }
+
+  getIdLabel(): string {
+    const labels: Record<string, string> = {
+      [RenterIdType.Identity]:          'رقم الهوية الوطنية',
+      [RenterIdType.Residency]:         'رقم الإقامة',
+      [RenterIdType.PremiumResidency]:  'رقم الإقامة المميزة',
+      [RenterIdType.GCC]:               'رقم الوثيقة',
+      [RenterIdType.CommercialRecord]:  'رقم السجل التجاري'
+    };
+    return labels[this.currentIdType] || 'رقم الوثيقة';
   }
 
   ngOnInit() {
@@ -88,9 +119,11 @@ export class RenterFormComponent implements OnInit {
     if (renter) {
       this.renterForm.patchValue({
         ...renter,
-        birthDate: renter.birthDate ? this.formatDate(renter.birthDate) : ''
+        birthDate: renter.birthDate ? this.formatDateStr(renter.birthDate) : '',
+        idExpiryDate: renter.idExpiryDate ? this.formatDateStr(renter.idExpiryDate) : '',
+        commercialRecordExpiryDate: renter.commercialRecordExpiryDate ? this.formatDateStr(renter.commercialRecordExpiryDate) : '',
+        representativeBirthDate: renter.representativeBirthDate ? this.formatDateStr(renter.representativeBirthDate) : ''
       });
-      // Trigger maritalStatus change to enable/disable familyMemberCount
       if (renter.maritalStatus === MaritalStatus.Married) {
         this.renterForm.get('familyMemberCount')?.enable();
       }
@@ -110,10 +143,15 @@ export class RenterFormComponent implements OnInit {
     this.loading = true;
     const formValue = this.renterForm.getRawValue();
 
+    const parseDate = (v: string) => v ? new Date(v) : undefined;
+
     if (this.isEditMode && this.renterId) {
       const updateData = {
         ...formValue,
-        birthDate: formValue.birthDate ? new Date(formValue.birthDate) : undefined,
+        birthDate: parseDate(formValue.birthDate),
+        idExpiryDate: parseDate(formValue.idExpiryDate),
+        commercialRecordExpiryDate: parseDate(formValue.commercialRecordExpiryDate),
+        representativeBirthDate: parseDate(formValue.representativeBirthDate),
         familyMemberCount: this.isMarried ? formValue.familyMemberCount : undefined
       };
 
@@ -131,7 +169,12 @@ export class RenterFormComponent implements OnInit {
     } else {
       const createData: CreateRenterDto = {
         ...formValue,
-        birthDate: formValue.birthDate ? new Date(formValue.birthDate) : undefined,
+        birthDate: parseDate(formValue.birthDate),
+        idExpiryDate: parseDate(formValue.idExpiryDate),
+        commercialRecordExpiryDate: this.isCommercialRecord ? parseDate(formValue.commercialRecordExpiryDate) : undefined,
+        representativeBirthDate: this.isCommercialRecord ? parseDate(formValue.representativeBirthDate) : undefined,
+        representativeId: this.isCommercialRecord ? formValue.representativeId : undefined,
+        representativeName: this.isCommercialRecord ? formValue.representativeName : undefined,
         familyMemberCount: this.isMarried ? formValue.familyMemberCount : undefined,
         hasAccount: true
       };
@@ -168,23 +211,17 @@ export class RenterFormComponent implements OnInit {
 
   getErrorMessage(fieldName: string): string {
     const control = this.renterForm.get(fieldName);
-
-    if (control?.hasError('required')) {
-      return 'هذا الحقل مطلوب';
-    }
-    if (control?.hasError('minlength')) {
+    if (control?.hasError('required')) return 'هذا الحقل مطلوب';
+    if (control?.hasError('minlength'))
       return `يجب أن يكون ${control.errors?.['minlength'].requiredLength} أحرف على الأقل`;
-    }
     if (control?.hasError('pattern')) {
-      if (fieldName === 'nationalId') return 'رقم الهوية يجب أن يكون 10 أرقام';
-      if (fieldName === 'phone' || fieldName === 'emergencyPhone') return 'رقم الهاتف يجب أن يبدأ بـ 05 ويتكون من 10 أرقام';
+      if (fieldName === 'phone' || fieldName === 'emergencyPhone')
+        return 'رقم الهاتف يجب أن يبدأ بـ 05 ويتكون من 10 أرقام';
     }
-
     return '';
   }
 
-  private formatDate(date: Date): string {
-    const d = new Date(date);
-    return d.toISOString().split('T')[0];
+  private formatDateStr(date: Date | string): string {
+    return new Date(date).toISOString().split('T')[0];
   }
 }

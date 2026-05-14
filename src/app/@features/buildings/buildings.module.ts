@@ -4,11 +4,16 @@ import { RouterModule, Routes } from '@angular/router';
 import { BuildingsListComponent } from './buildings-list/buildings-list.component';
 import { BuildingFormComponent } from './building-form/building-form.component';
 import { BuildingDetailComponent } from './building-detail/building-detail.component';
+import { BuildingsMapComponent } from './buildings-map/buildings-map.component';
 
 const routes: Routes = [
   {
     path: '',
     component: BuildingsListComponent
+  },
+  {
+    path: 'map',
+    component: BuildingsMapComponent
   },
   {
     path: 'new',

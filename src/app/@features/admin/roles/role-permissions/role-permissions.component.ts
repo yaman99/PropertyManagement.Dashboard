@@ -126,7 +126,8 @@ export class RolePermissionsComponent implements OnInit {
       'Admin': 'مدير النظام',
       'Accountant': 'محاسب',
       'Owner': 'مالك',
-      'Renter': 'مستأجر'
+      'Renter': 'مستأجر',
+      'Employee': 'موظف'
     };
     return names[role] || role;
   }
@@ -224,6 +225,14 @@ export class RolePermissionsComponent implements OnInit {
       ],
       'Renter': [
         Permission.DASHBOARD_READ,
+        Permission.LEASES_READ,
+        Permission.REQUESTS_READ,
+        Permission.REQUESTS_WRITE
+      ],
+      'Employee': [
+        Permission.DASHBOARD_READ,
+        Permission.UNITS_READ,
+        Permission.RENTERS_READ,
         Permission.LEASES_READ,
         Permission.REQUESTS_READ,
         Permission.REQUESTS_WRITE

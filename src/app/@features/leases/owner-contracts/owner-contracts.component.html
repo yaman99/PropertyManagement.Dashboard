@@ -1,0 +1,247 @@
+<!-- No-print area: list + controls -->
+<div class="no-print" dir="rtl">
+
+  <app-page-header
+    title="عقود الملاك"
+    icon="bi-file-earmark-text"
+    [breadcrumbs]="[{label: 'العقود', url: '/app/leases'}, {label: 'عقود الملاك'}]"
+    [showActions]="false">
+  </app-page-header>
+
+  <!-- Filters -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input type="text" class="form-control" [(ngModel)]="searchTerm"
+              placeholder="ابحث باسم المالك، المستأجر، المبنى، كود الوحدة...">
+          </div>
+        </div>
+        <div class="col-md-3">
+          <select class="form-select" [(ngModel)]="filterStatus">
+            <option value="all">جميع الحالات</option>
+            <option value="Active">نشط</option>
+            <option value="Inactive">غير نشط</option>
+            <option value="Expired">منتهي</option>
+            <option value="Cancelled">ملغي</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contracts List -->
+  <div class="row g-3">
+    <div class="col-md-6 col-lg-4" *ngFor="let item of filteredLeases$ | async">
+      <div class="card h-100 border-0 shadow-sm contract-card" (click)="openContract(item)"
+        style="cursor:pointer; transition: transform 0.15s;"
+        onmouseenter="this.style.transform='translateY(-2px)'"
+        onmouseleave="this.style.transform='none'">
+        <div class="card-header d-flex justify-content-between align-items-center bg-light">
+          <span class="badge" [ngClass]="getStatusBadge(item.lease.status)">
+            {{ getStatusLabel(item.lease.status) }}
+          </span>
+          <small class="text-muted">{{ item.unit?.unitCode }}</small>
+        </div>
+        <div class="card-body">
+          <h6 class="fw-bold mb-1"><i class="bi bi-building me-1 text-brand"></i>{{ item.building?.name || '-' }}</h6>
+          <p class="text-muted small mb-2">{{ item.unit?.unitCode }}</p>
+          <div class="d-flex justify-content-between mb-1">
+            <span class="text-muted small"><i class="bi bi-person me-1"></i>المالك</span>
+            <span class="small fw-semibold">{{ item.owner?.fullName || '-' }}</span>
+          </div>
+          <div class="d-flex justify-content-between mb-1">
+            <span class="text-muted small"><i class="bi bi-person-fill me-1"></i>المستأجر</span>
+            <span class="small fw-semibold">{{ item.renter?.fullName || '-' }}</span>
+          </div>
+          <div class="d-flex justify-content-between mb-1">
+            <span class="text-muted small"><i class="bi bi-calendar me-1"></i>البداية</span>
+            <span class="small">{{ formatDate(item.lease.startDate) }}</span>
+          </div>
+          <div class="d-flex justify-content-between">
+            <span class="text-muted small"><i class="bi bi-cash me-1"></i>القيمة</span>
+            <span class="small fw-bold text-brand">{{ item.lease.totalContractValue | number }} ر.س</span>
+          </div>
+        </div>
+        <div class="card-footer bg-transparent text-center">
+          <button class="btn btn-sm btn-outline-brand" (click)="openContract(item); $event.stopPropagation()">
+            <i class="bi bi-file-earmark-text me-1"></i> عرض العقد
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12" *ngIf="(filteredLeases$ | async)?.length === 0">
+      <div class="text-center py-5">
+        <i class="bi bi-inbox fs-1 text-muted"></i>
+        <p class="text-muted mt-2">لا توجد عقود مطابقة</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Contract Modal/Print View -->
+<div *ngIf="selectedLease" class="contract-overlay no-print" (click)="closeContract()">
+  <div class="contract-modal" (click)="$event.stopPropagation()">
+    <div class="d-flex justify-content-between align-items-center mb-3 no-print">
+      <h5 class="mb-0">نموذج العقد</h5>
+      <div class="d-flex gap-2">
+        <button class="btn btn-brand" (click)="printContract()">
+          <i class="bi bi-printer me-1"></i> طباعة العقد
+        </button>
+        <button class="btn btn-secondary" (click)="closeContract()">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+    </div>
+    <!-- The printable contract template -->
+    <ng-container *ngTemplateOutlet="contractTemplate; context: { item: selectedLease }"></ng-container>
+  </div>
+</div>
+
+<!-- Printable Contract (shown when printing) -->
+<div class="print-only" *ngIf="selectedLease">
+  <ng-container *ngTemplateOutlet="contractTemplate; context: { item: selectedLease }"></ng-container>
+</div>
+
+<!-- ══════════════════ Contract Template ══════════════════ -->
+<ng-template #contractTemplate let-item="item">
+  <div class="contract-paper" dir="rtl">
+
+    <!-- Header -->
+    <div class="contract-header text-center border-bottom pb-3 mb-4">
+      <img src="assets/branding/logo-white-bg-with-name.jpeg" alt="Omar Almarbie" style="max-height:70px;" class="mb-2">
+      <h3 class="fw-bold mb-1">عقد إيجار</h3>
+      <p class="text-muted mb-0">Lease Agreement</p>
+    </div>
+
+    <!-- Parties -->
+    <div class="row mb-4">
+      <div class="col-6">
+        <div class="party-box border rounded p-3">
+          <h6 class="text-brand fw-bold mb-2"><i class="bi bi-person-badge me-1"></i> الطرف الأول (المؤجر)</h6>
+          <p class="mb-1"><strong>الاسم:</strong> {{ item.owner?.fullName || '-' }}</p>
+          <p class="mb-1"><strong>رقم الهوية:</strong> {{ item.owner?.nationalId || '-' }}</p>
+          <p class="mb-1"><strong>الهاتف:</strong> {{ item.owner?.phone || '-' }}</p>
+          <p class="mb-0"><strong>الحساب البنكي (IBAN):</strong> {{ item.owner?.bankAccount || '-' }}</p>
+        </div>
+      </div>
+      <div class="col-6">
+        <div class="party-box border rounded p-3">
+          <h6 class="text-brand fw-bold mb-2"><i class="bi bi-person me-1"></i> الطرف الثاني (المستأجر)</h6>
+          <p class="mb-1"><strong>الاسم:</strong> {{ item.renter?.fullName || '-' }}</p>
+          <p class="mb-1"><strong>رقم الهوية:</strong> {{ item.renter?.nationalId || '-' }}</p>
+          <p class="mb-1"><strong>الهاتف:</strong> {{ item.renter?.phone || '-' }}</p>
+          <p class="mb-0"><strong>الجنسية:</strong> {{ item.renter?.nationality || '-' }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Property Details -->
+    <div class="section-title fw-bold text-brand mb-2">البند الأول: بيانات العقار المؤجَّر</div>
+    <div class="border rounded p-3 mb-4">
+      <div class="row">
+        <div class="col-6">
+          <p class="mb-1"><strong>المبنى:</strong> {{ item.building?.name || '-' }}</p>
+          <p class="mb-1"><strong>العنوان:</strong> {{ item.building?.address || '-' }}</p>
+          <p class="mb-0"><strong>المدينة:</strong> {{ item.building?.city || '-' }}</p>
+        </div>
+        <div class="col-6">
+          <p class="mb-1"><strong>رقم الوحدة:</strong> {{ item.unit?.unitCode || '-' }}</p>
+          <p class="mb-1"><strong>نوع الوحدة:</strong> {{ item.unit?.type || '-' }}</p>
+          <p class="mb-0"><strong>المساحة:</strong> {{ item.unit?.areaSqm ? (item.unit.areaSqm + ' م²') : '-' }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Contract Duration -->
+    <div class="section-title fw-bold text-brand mb-2">البند الثاني: مدة الإيجار</div>
+    <div class="border rounded p-3 mb-4">
+      <div class="row">
+        <div class="col-4">
+          <p class="mb-0"><strong>مدة العقد:</strong> {{ getDurationLabel(item.lease.contractDuration) }}</p>
+        </div>
+        <div class="col-4">
+          <p class="mb-0"><strong>تاريخ البداية:</strong> {{ formatDate(item.lease.startDate) }}</p>
+        </div>
+        <div class="col-4">
+          <p class="mb-0"><strong>تاريخ الانتهاء:</strong> {{ formatDate(item.lease.endDate) }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Financial Terms -->
+    <div class="section-title fw-bold text-brand mb-2">البند الثالث: بدل الإيجار والشروط المالية</div>
+    <div class="border rounded p-3 mb-4">
+      <div class="row mb-2">
+        <div class="col-6">
+          <p class="mb-1"><strong>إجمالي قيمة العقد:</strong> {{ item.lease.totalContractValue | number }} ر.س</p>
+          <p class="mb-0"><strong>دورة السداد:</strong> {{ item.lease.paymentCycle }}</p>
+        </div>
+        <div class="col-6">
+          <p class="mb-1"><strong>مبلغ التأمين:</strong> {{ (item.lease.depositAmount || 0) | number }} ر.س</p>
+          <p class="mb-0"><strong>العمولة:</strong> {{ item.lease.rentalCommission | number }} ر.س ({{ item.lease.commissionPercentage }}%)</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Clauses -->
+    <div class="section-title fw-bold text-brand mb-2">البند الرابع: الشروط والأحكام</div>
+    <ol class="mb-4 small">
+      <li class="mb-1">يلتزم المستأجر بسداد بدل الإيجار في مواعيده المحددة وفق جدول الدفعات.</li>
+      <li class="mb-1">لا يحق للمستأجر التنازل عن العقد أو التأجير من الباطن دون موافقة كتابية من المؤجر.</li>
+      <li class="mb-1">يلتزم المستأجر بالمحافظة على العقار وإعادته بنفس الحالة التي استلمه بها.</li>
+      <li class="mb-1">يتحمل المستأجر أعمال الصيانة البسيطة ويتحمل المؤجر الصيانة الأساسية للعقار.</li>
+      <li class="mb-1">في حال تأخر المستأجر عن السداد يحق للمؤجر اتخاذ الإجراءات النظامية اللازمة.</li>
+      <li class="mb-1">يخضع هذا العقد لأحكام نظام الإيجار العقاري في المملكة العربية السعودية.</li>
+    </ol>
+
+    <!-- Payment Schedule -->
+    <div class="section-title fw-bold text-brand mb-2">جدول الدفعات</div>
+    <table class="table table-sm table-bordered mb-4">
+      <thead class="table-light">
+        <tr>
+          <th>#</th>
+          <th>تاريخ الاستحقاق</th>
+          <th>المبلغ</th>
+          <th>الحالة</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let payment of item.lease.paymentSchedule; let i = index">
+          <td>{{ i + 1 }}</td>
+          <td>{{ formatDate(payment.dueDate) }}</td>
+          <td>{{ payment.amount | number }} ر.س</td>
+          <td>
+            <span *ngIf="payment.status === 'Paid'" class="text-success">✓ مدفوع</span>
+            <span *ngIf="payment.status === 'Pending'" class="text-warning">معلق</span>
+            <span *ngIf="payment.status === 'Overdue'" class="text-danger">متأخر</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Signatures -->
+    <div class="row mt-5 pt-4">
+      <div class="col-6 text-center">
+        <div class="border-top border-dark pt-2 mx-4">
+          <p class="mb-0 fw-bold">توقيع الطرف الأول (المؤجر)</p>
+          <small class="text-muted">{{ item.owner?.fullName }}</small>
+        </div>
+      </div>
+      <div class="col-6 text-center">
+        <div class="border-top border-dark pt-2 mx-4">
+          <p class="mb-0 fw-bold">توقيع الطرف الثاني (المستأجر)</p>
+          <small class="text-muted">{{ item.renter?.fullName }}</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="text-center text-muted small mt-5 pt-3 border-top">
+      تم إعداد هذا العقد بتاريخ {{ formatDate(item.lease.createdAt) }} — نظام إدارة أملاك عمر المربع
+    </div>
+  </div>
+</ng-template>

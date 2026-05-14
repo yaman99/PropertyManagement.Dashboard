@@ -22,7 +22,9 @@ export interface Lease {
 
   // Commission (عمولة التأجير)
   commissionPercentage: number;     // نسبة العمولة (2.5% افتراضي)
-  rentalCommission: number;         // مبلغ العمولة المحسوب
+  rentalCommission: number;         // مبلغ العمولة المحسوب (بعد الخصم وقبل الضريبة)
+  commissionVat: number;            // ضريبة العمولة (15% من العمولة)
+  commissionTotal: number;          // إجمالي العمولة (عمولة + ضريبة)
   commissionDiscount?: number;      // خصم على العمولة (بالريال)
 
   // Payment Status for Activation
@@ -58,7 +60,8 @@ export interface Lease {
 export enum ContractDuration {
   OneYear = 'OneYear',             // سنة
   SixMonths = 'SixMonths',        // 6 أشهر
-  ThreeMonths = 'ThreeMonths'     // 3 أشهر
+  ThreeMonths = 'ThreeMonths',    // 3 أشهر
+  Custom = 'Custom'               // مخصص (تاريخ يدوي)
 }
 
 export enum PaymentCycle {
@@ -144,9 +147,11 @@ export function getAllowedPaymentCycles(duration: ContractDuration): PaymentCycl
     case ContractDuration.OneYear:
       return [PaymentCycle.Monthly, PaymentCycle.Quarterly, PaymentCycle.SemiAnnual, PaymentCycle.Annual];
     case ContractDuration.SixMonths:
-      return [PaymentCycle.Monthly, PaymentCycle.Quarterly, PaymentCycle.SemiAnnual]; // SemiAnnual = دفعة كاملة
+      return [PaymentCycle.Monthly, PaymentCycle.Quarterly, PaymentCycle.SemiAnnual];
     case ContractDuration.ThreeMonths:
-      return [PaymentCycle.Monthly, PaymentCycle.Quarterly]; // Quarterly = دفعة كاملة
+      return [PaymentCycle.Monthly, PaymentCycle.Quarterly];
+    case ContractDuration.Custom:
+      return [PaymentCycle.Monthly, PaymentCycle.Quarterly, PaymentCycle.SemiAnnual, PaymentCycle.Annual];
     default:
       return [PaymentCycle.Monthly];
   }
@@ -158,23 +163,39 @@ export function calculateEndDate(startDate: Date, duration: ContractDuration): D
   switch (duration) {
     case ContractDuration.OneYear:
       end.setFullYear(end.getFullYear() + 1);
+      end.setDate(end.getDate() - 1);
       break;
     case ContractDuration.SixMonths:
       end.setMonth(end.getMonth() + 6);
+      end.setDate(end.getDate() - 1);
       break;
     case ContractDuration.ThreeMonths:
       end.setMonth(end.getMonth() + 3);
+      end.setDate(end.getDate() - 1);
+      break;
+    case ContractDuration.Custom:
+      // Custom: end date is provided manually, don't modify
       break;
   }
-  // End date is one day before the anniversary
-  end.setDate(end.getDate() - 1);
   return end;
 }
 
-// --- Helper: Calculate commission ---
+// --- Helper: Calculate commission (returns net after discount, before VAT) ---
 export function calculateCommission(totalContractValue: number, commissionPercentage: number, discount: number = 0): number {
   const commission = totalContractValue * (commissionPercentage / 100);
   return Math.max(0, commission - discount);
+}
+
+// --- Helper: Full commission breakdown ---
+export function calculateCommissionBreakdown(
+  totalContractValue: number,
+  commissionPercentage: number,
+  discount: number = 0
+): { net: number; vat: number; total: number } {
+  const net = Math.max(0, totalContractValue * (commissionPercentage / 100) - discount);
+  const vat = Math.round(net * 0.15 * 100) / 100;
+  const total = Math.round((net + vat) * 100) / 100;
+  return { net, vat, total };
 }
 
 // --- Helper: Generate payment schedule from total contract value ---
@@ -182,16 +203,24 @@ export function generatePaymentSchedule(
   startDate: Date,
   totalContractValue: number,
   paymentCycle: PaymentCycle,
-  contractDuration: ContractDuration
+  contractDuration: ContractDuration,
+  endDate?: Date
 ): PaymentScheduleItem[] {
   const schedule: PaymentScheduleItem[] = [];
 
   let totalMonths: number;
-  switch (contractDuration) {
-    case ContractDuration.OneYear: totalMonths = 12; break;
-    case ContractDuration.SixMonths: totalMonths = 6; break;
-    case ContractDuration.ThreeMonths: totalMonths = 3; break;
-    default: totalMonths = 12;
+  if (contractDuration === ContractDuration.Custom && endDate) {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const diffTime = end.getTime() - start.getTime();
+    totalMonths = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24 * 30)));
+  } else {
+    switch (contractDuration) {
+      case ContractDuration.OneYear: totalMonths = 12; break;
+      case ContractDuration.SixMonths: totalMonths = 6; break;
+      case ContractDuration.ThreeMonths: totalMonths = 3; break;
+      default: totalMonths = 12;
+    }
   }
 
   let monthsPerPayment: number;
@@ -235,6 +264,7 @@ export interface CreateLeaseDto {
   renterId: string;
   unitId: string;
   startDate: Date;
+  endDate?: Date;              // For Custom duration
   contractDuration: ContractDuration;
   paymentCycle: PaymentCycle;
   totalContractValue: number;

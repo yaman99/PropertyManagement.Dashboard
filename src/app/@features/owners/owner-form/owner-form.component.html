@@ -8,86 +8,57 @@
   [showActions]="false">
 </app-page-header>
 
-<div class="card" dir="rtl">
-  <div class="card-body">
-    <form [formGroup]="ownerForm" (ngSubmit)="onSubmit()">
+<form [formGroup]="ownerForm" (ngSubmit)="onSubmit()" dir="rtl">
+
+  <!-- ── Section 1: Basic Info ─────────────────────────────── -->
+  <div class="card mb-3">
+    <div class="card-header fw-bold">
+      <i class="bi bi-person-fill me-2 text-brand"></i> البيانات الأساسية
+    </div>
+    <div class="card-body">
       <div class="row g-3">
+
         <!-- Full Name -->
         <div class="col-md-6">
           <label class="form-label">الاسم الكامل <span class="text-danger">*</span></label>
-          <input
-            type="text"
-            class="form-control"
-            formControlName="fullName"
+          <input type="text" class="form-control" formControlName="fullName"
             [class.is-invalid]="ownerForm.get('fullName')?.invalid && ownerForm.get('fullName')?.touched"
             placeholder="أدخل الاسم الكامل">
-          <div class="invalid-feedback">
-            {{ getErrorMessage('fullName') }}
-          </div>
+          <div class="invalid-feedback">{{ getErrorMessage('fullName') }}</div>
         </div>
 
         <!-- National ID -->
         <div class="col-md-6">
           <label class="form-label">رقم الهوية الوطنية <span class="text-danger">*</span></label>
-          <input
-            type="text"
-            class="form-control"
-            formControlName="nationalId"
+          <input type="text" class="form-control" formControlName="nationalId"
             [class.is-invalid]="ownerForm.get('nationalId')?.invalid && ownerForm.get('nationalId')?.touched"
-            placeholder="1234567890"
-            maxlength="10">
-          <div class="invalid-feedback">
-            {{ getErrorMessage('nationalId') }}
-          </div>
+            placeholder="1234567890" maxlength="10">
+          <div class="invalid-feedback">{{ getErrorMessage('nationalId') }}</div>
         </div>
 
         <!-- Phone -->
         <div class="col-md-6">
           <label class="form-label">رقم الجوال <span class="text-danger">*</span></label>
-          <input
-            type="tel"
-            class="form-control"
-            formControlName="phone"
+          <input type="tel" class="form-control" formControlName="phone"
             [class.is-invalid]="ownerForm.get('phone')?.invalid && ownerForm.get('phone')?.touched"
-            placeholder="05xxxxxxxx"
-            maxlength="10">
-          <div class="invalid-feedback">
-            {{ getErrorMessage('phone') }}
-          </div>
+            placeholder="05xxxxxxxx" maxlength="10">
+          <div class="invalid-feedback">{{ getErrorMessage('phone') }}</div>
         </div>
 
         <!-- Email -->
         <div class="col-md-6">
           <label class="form-label">البريد الإلكتروني</label>
-          <input
-            type="email"
-            class="form-control"
-            formControlName="email"
+          <input type="email" class="form-control" formControlName="email"
             [class.is-invalid]="ownerForm.get('email')?.invalid && ownerForm.get('email')?.touched"
             placeholder="example@email.com">
-          <div class="invalid-feedback">
-            {{ getErrorMessage('email') }}
-          </div>
+          <div class="invalid-feedback">{{ getErrorMessage('email') }}</div>
         </div>
 
         <!-- Address -->
-        <div class="col-md-12">
+        <div class="col-12">
           <label class="form-label">العنوان</label>
-          <textarea
-            class="form-control"
-            formControlName="address"
-            rows="2"
+          <textarea class="form-control" formControlName="address" rows="2"
             placeholder="أدخل العنوان"></textarea>
-        </div>
-
-        <!-- Bank Account -->
-        <div class="col-md-6">
-          <label class="form-label">رقم الحساب البنكي (IBAN)</label>
-          <input
-            type="text"
-            class="form-control"
-            formControlName="bankAccount"
-            placeholder="SAxx xxxx xxxx xxxx xxxx xxxx">
         </div>
 
         <!-- Status -->
@@ -100,20 +71,114 @@
           </select>
         </div>
 
-        <!-- Notes -->
-        <div class="col-md-12">
-          <label class="form-label">ملاحظات</label>
-          <textarea
-            class="form-control"
-            formControlName="notes"
-            rows="3"
-            placeholder="أدخل أي ملاحظات إضافية"></textarea>
+        <!-- Is Independent -->
+        <div class="col-md-6 d-flex align-items-center">
+          <div class="form-check mt-4">
+            <input type="checkbox" class="form-check-input" id="isIndependent"
+              formControlName="isIndependent">
+            <label class="form-check-label fw-semibold" for="isIndependent">
+              مالك مستقل فقط
+              <span class="text-muted small d-block">لا يرتبط بمبنى، يملك وحدات مستقلة</span>
+            </label>
+          </div>
         </div>
+
+        <!-- Notes -->
+        <div class="col-12">
+          <label class="form-label">ملاحظات</label>
+          <textarea class="form-control" formControlName="notes" rows="2"
+            placeholder="أي ملاحظات إضافية"></textarea>
+        </div>
+
       </div>
+    </div>
+  </div>
 
-      <hr class="my-4">
+  <!-- ── Section 2: Banking Info ───────────────────────────── -->
+  <div class="card mb-3">
+    <div class="card-header fw-bold">
+      <i class="bi bi-bank2 me-2 text-brand"></i> البيانات البنكية
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
 
-      <!-- Actions -->
+        <!-- Bank Name -->
+        <div class="col-md-6">
+          <label class="form-label">اسم البنك</label>
+          <select class="form-select" formControlName="bankName">
+            <option value="">-- اختر البنك --</option>
+            <option *ngFor="let bank of bankOptions" [value]="bank">{{ bank }}</option>
+          </select>
+        </div>
+
+        <!-- Account Holder Name -->
+        <div class="col-md-6">
+          <label class="form-label">اسم صاحب الحساب</label>
+          <input type="text" class="form-control" formControlName="accountHolderName"
+            placeholder="كما هو مدوّن في البنك">
+        </div>
+
+        <!-- Bank Account / IBAN -->
+        <div class="col-md-6">
+          <label class="form-label">رقم الحساب البنكي (IBAN)</label>
+          <input type="text" class="form-control" formControlName="bankAccount"
+            placeholder="SAxx xxxx xxxx xxxx xxxx xxxx">
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Section 3: Agency Info ────────────────────────────── -->
+  <div class="card mb-3">
+    <div class="card-header fw-bold">
+      <i class="bi bi-file-earmark-person me-2 text-brand"></i> بيانات الوكالة
+      <span class="text-muted small fw-normal me-2">(اختياري)</span>
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
+
+        <!-- Agency Number -->
+        <div class="col-md-6">
+          <label class="form-label">رقم الوكالة</label>
+          <input type="text" class="form-control" formControlName="agencyNumber"
+            placeholder="أدخل رقم الوكالة">
+        </div>
+
+        <!-- Agency Expiry Date -->
+        <div class="col-md-6">
+          <label class="form-label">تاريخ انتهاء الوكالة</label>
+          <input type="date" class="form-control" formControlName="agencyExpiryDate">
+        </div>
+
+        <!-- Agency File Upload -->
+        <div class="col-12">
+          <label class="form-label">ملف الوكالة (PDF)</label>
+          <div *ngIf="!agencyFilePreview">
+            <input type="file" class="form-control" accept="application/pdf"
+              (change)="onAgencyFileSelected($event)">
+            <small class="text-muted">يُقبل ملف PDF فقط</small>
+          </div>
+          <div *ngIf="agencyFilePreview" class="d-flex align-items-center gap-3 p-3 border rounded bg-light">
+            <i class="bi bi-file-earmark-pdf fs-2 text-danger"></i>
+            <div>
+              <div class="fw-semibold">{{ agencyFileName }}</div>
+              <small class="text-muted">تم رفع الملف</small>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-danger me-auto"
+              (click)="removeAgencyFile()">
+              <i class="bi bi-trash"></i> حذف
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Actions ────────────────────────────────────────────── -->
+  <div class="card">
+    <div class="card-body">
       <div class="d-flex justify-content-end gap-2">
         <button type="button" class="btn btn-secondary" (click)="cancel()" [disabled]="loading">
           إلغاء
@@ -123,10 +188,11 @@
           {{ isEditMode ? 'حفظ التعديلات' : 'إضافة المالك' }}
         </button>
       </div>
-
-      <div *ngIf="!isEditMode" class="alert alert-info mt-3" role="alert">
-        <strong>ملاحظة:</strong> عند إضافة مالك جديد، سيتم إنشاء حساب خاص به تلقائياً وستظهر بيانات الدخول في نافذة منبثقة.
+      <div *ngIf="!isEditMode" class="alert alert-info mt-3 mb-0" role="alert">
+        <i class="bi bi-info-circle me-2"></i>
+        عند إضافة مالك جديد، سيتم إنشاء حساب تلقائياً وستظهر بيانات الدخول في نافذة منبثقة.
       </div>
-    </form>
+    </div>
   </div>
-</div>
+
+</form>

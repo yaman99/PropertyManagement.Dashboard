@@ -97,13 +97,20 @@
       </div>
     </div>
 
+    <!-- Clickable: Overdue Payments Card -->
     <div class="col-md-6 col-lg-3">
-      <div class="card stat-card shadow-sm h-100">
+      <div class="card stat-card stat-card-clickable shadow-sm h-100"
+           (click)="openLatePaymentsModal()"
+           role="button"
+           [attr.aria-label]="'عرض تفاصيل المدفوعات المتأخرة'">
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center">
             <div>
               <p class="text-muted mb-1">مدفوعات متأخرة</p>
               <h3 class="fw-bold mb-0 text-danger">{{ stats.overduePayments }}</h3>
+              <small class="text-danger clickable-hint">
+                <i class="bi bi-arrow-left-circle me-1"></i>اضغط للتفاصيل
+              </small>
             </div>
             <div class="stat-icon bg-danger">⚠️</div>
           </div>
@@ -222,5 +229,153 @@
         </div>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- ===================== Late Payments Modal ===================== -->
+<div class="late-payments-overlay" *ngIf="showLatePaymentsModal" (click)="closeLatePaymentsModal()">
+  <div class="late-payments-modal" dir="rtl" (click)="$event.stopPropagation()">
+
+    <!-- Header -->
+    <div class="modal-header-custom">
+      <div>
+        <h5 class="mb-0 fw-bold text-danger">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i>المدفوعات المتأخرة
+        </h5>
+        <small class="text-muted">
+          {{ filteredLatePayments.length }} دفعة متأخرة
+          <span *ngIf="selectedBuildingIds.length > 0"> (بعد الفلترة)</span>
+        </small>
+      </div>
+      <button class="btn btn-sm btn-outline-secondary" (click)="closeLatePaymentsModal()">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+
+    <!-- Building Filter -->
+    <div class="building-filter-bar" *ngIf="buildingsInLatePayments.length > 0">
+      <span class="filter-label"><i class="bi bi-funnel me-1"></i>فلتر المباني:</span>
+      <div class="filter-chips">
+        <button class="chip"
+                [class.chip-active]="selectedBuildingIds.length === 0"
+                (click)="clearBuildingFilter()">
+          الكل ({{ latePayments.length }})
+        </button>
+        <button
+          *ngFor="let building of buildingsInLatePayments"
+          class="chip"
+          [class.chip-active]="isBuildingSelected(building.id)"
+          (click)="toggleBuildingFilter(building.id)">
+          🏗️ {{ building.name }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="modal-body-custom">
+      <div *ngIf="filteredLatePayments.length === 0" class="text-center py-5 text-muted">
+        <i class="bi bi-check-circle fs-1 text-success d-block mb-2"></i>
+        <p class="mb-0">لا توجد مدفوعات متأخرة</p>
+      </div>
+
+      <div *ngIf="filteredLatePayments.length > 0" class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light sticky-top">
+            <tr>
+              <th>#</th>
+              <th>المبنى</th>
+              <th>الوحدة</th>
+              <th>المستأجر</th>
+              <th class="text-center">المبلغ</th>
+              <th class="text-center">تاريخ الاستحقاق</th>
+              <th class="text-center">التأخر</th>
+              <th class="text-center">الحالة</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of filteredLatePayments; let i = index"
+                class="late-payment-row">
+              <td class="text-muted">{{ i + 1 }}</td>
+
+              <!-- Building -->
+              <td>
+                <span *ngIf="item.building" class="fw-semibold">
+                  <i class="bi bi-building me-1 text-brand"></i>{{ item.building.name }}
+                </span>
+                <span *ngIf="!item.building" class="text-muted small">—</span>
+              </td>
+
+              <!-- Unit -->
+              <td>
+                <div *ngIf="item.unit">
+                  <div class="fw-semibold">{{ item.unit.unitCode }}</div>
+                  <small class="text-muted">{{ item.unit.type }}</small>
+                </div>
+                <span *ngIf="!item.unit" class="text-muted small">—</span>
+              </td>
+
+              <!-- Renter -->
+              <td>
+                <div *ngIf="item.renter">
+                  <div class="fw-semibold">{{ item.renter.fullName }}</div>
+                  <small class="text-muted">
+                    <i class="bi bi-telephone me-1"></i>{{ item.renter.phone }}
+                  </small>
+                </div>
+                <span *ngIf="!item.renter" class="text-muted small">—</span>
+              </td>
+
+              <!-- Amount -->
+              <td class="text-center">
+                <span class="fw-bold text-danger">{{ item.payment.amount | number }}</span>
+                <small class="text-muted d-block">ر.س</small>
+              </td>
+
+              <!-- Due Date -->
+              <td class="text-center" dir="ltr">
+                {{ formatDate(item.payment.dueDate) }}
+              </td>
+
+              <!-- Days late -->
+              <td class="text-center">
+                <span class="badge bg-danger">
+                  {{ getDaysDue(item.payment.dueDate) }} يوم
+                </span>
+              </td>
+
+              <!-- Status -->
+              <td class="text-center">
+                <span class="badge" [ngClass]="getPaymentStatusClass(item.payment.status)">
+                  {{ getPaymentStatusLabel(item.payment.status) }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+          <!-- Summary footer -->
+          <tfoot class="table-light fw-bold">
+            <tr>
+              <td colspan="4" class="text-start">
+                المجموع ({{ filteredLatePayments.length }} دفعة)
+              </td>
+              <td class="text-center text-danger">
+                {{ getTotalAmount(filteredLatePayments) | number }} ر.س
+              </td>
+              <td colspan="3"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="modal-footer-custom">
+      <a routerLink="/app/leases" class="btn btn-brand btn-sm" (click)="closeLatePaymentsModal()">
+        <i class="bi bi-file-earmark-text me-1"></i> عرض عقود الإيجار
+      </a>
+      <button class="btn btn-outline-secondary btn-sm" (click)="closeLatePaymentsModal()">
+        إغلاق
+      </button>
+    </div>
+
   </div>
 </div>

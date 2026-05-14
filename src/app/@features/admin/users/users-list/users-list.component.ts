@@ -3,13 +3,14 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Store } from '@ngxs/store';
 import { AuthService } from '../../../../@core/application/services/auth.service';
-import { User, UserRole } from '../../../../@core/domain/models/auth.model';
+import { User, UserRole, Permission } from '../../../../@core/domain/models/auth.model';
 import { Owner } from '../../../../@core/domain/models/owner.model';
 import { Renter } from '../../../../@core/domain/models/renter.model';
 import { OwnersState, OwnersActions } from '../../../../@core/state/owners.state';
 import { RentersState, RentersActions } from '../../../../@core/state/renters.state';
 import { PageHeaderComponent } from '../../../../@shared/components/page-header/page-header.component';
 import { EmptyStateComponent } from '../../../../@shared/components/empty-state/empty-state.component';
+import { AlertService } from '../../../../@shared/services/alert.service';
 
 interface UserWithStats extends User {
   linkedOwner?: Owner;
@@ -38,12 +39,35 @@ export class UsersListComponent implements OnInit {
     { value: 'Admin', label: 'مدير النظام' },
     { value: 'Accountant', label: 'محاسب' },
     { value: 'Owner', label: 'مالك' },
-    { value: 'Renter', label: 'مستأجر' }
+    { value: 'Renter', label: 'مستأجر' },
+    { value: 'Employee', label: 'موظف' }
+  ];
+
+  // ── Add User Modal ────────────────────────────────────────────────────────
+  showAddModal = false;
+  addingUser = false;
+  newUsername = '';
+  newPassword = '';
+  newRole: UserRole = 'Employee';
+  newOwnerId = '';
+  newRenterId = '';
+
+  // Available owners & renters for linking
+  availableOwners: Owner[] = [];
+  availableRenters: Renter[] = [];
+
+  addUserRoles: { value: UserRole; label: string; icon: string }[] = [
+    { value: 'Admin',      label: 'مدير النظام',   icon: '🔑' },
+    { value: 'Accountant', label: 'محاسب',          icon: '💰' },
+    { value: 'Employee',   label: 'موظف',           icon: '👷' },
+    { value: 'Owner',      label: 'مالك',           icon: '🏠' },
+    { value: 'Renter',     label: 'مستأجر',         icon: '🔒' }
   ];
 
   constructor(
     private authService: AuthService,
-    private store: Store
+    private store: Store,
+    private alertService: AlertService
   ) {}
 
   ngOnInit() {
@@ -54,16 +78,17 @@ export class UsersListComponent implements OnInit {
       const owners = this.store.selectSnapshot(OwnersState.owners);
       const renters = this.store.selectSnapshot(RentersState.renters);
 
+      this.availableOwners = owners;
+      this.availableRenters = renters;
+
       this.users = users.map(user => {
         const linkedOwner = user.ownerId ? owners.find(o => o.id === user.ownerId) : undefined;
         const linkedRenter = user.renterId ? renters.find(r => r.id === user.renterId) : undefined;
 
-        // Count owners assigned to this user (assignedToUserId)
         const managedOwnersCount = owners.filter(o =>
           (o as any).assignedUserId === user.id || o.id === user.ownerId
         ).length;
 
-        // Count renters assigned to this user
         const managedRentersCount = renters.filter(r =>
           (r as any).assignedUserId === user.id || r.id === user.renterId
         ).length;
@@ -76,13 +101,13 @@ export class UsersListComponent implements OnInit {
     });
   }
 
+  // ── Filtering ─────────────────────────────────────────────────────────────
+
   applyFilters() {
     this.filteredUsers = this.users.filter(user => {
       const matchesSearch = !this.searchTerm ||
         user.username.toLowerCase().includes(this.searchTerm.toLowerCase());
-
       const matchesRole = this.roleFilter === 'All' || user.role === this.roleFilter;
-
       return matchesSearch && matchesRole;
     });
   }
@@ -93,12 +118,106 @@ export class UsersListComponent implements OnInit {
     this.applyFilters();
   }
 
+  // ── Add User Modal ────────────────────────────────────────────────────────
+
+  openAddModal() {
+    this.newUsername = '';
+    this.newPassword = '';
+    this.newRole = 'Employee';
+    this.newOwnerId = '';
+    this.newRenterId = '';
+    this.showAddModal = true;
+  }
+
+  closeAddModal() {
+    this.showAddModal = false;
+  }
+
+  get isOwnerRole(): boolean { return this.newRole === 'Owner'; }
+  get isRenterRole(): boolean { return this.newRole === 'Renter'; }
+
+  getDefaultPermissionsForRole(role: UserRole): Permission[] {
+    switch (role) {
+      case 'Admin':
+        return Object.values(Permission);
+      case 'Accountant':
+        return [
+          Permission.DASHBOARD_READ, Permission.OWNERS_READ, Permission.UNITS_READ,
+          Permission.RENTERS_READ, Permission.LEASES_READ,
+          Permission.ACCOUNTING_READ, Permission.ACCOUNTING_WRITE
+        ];
+      case 'Owner':
+        return [
+          Permission.DASHBOARD_READ, Permission.UNITS_READ,
+          Permission.LEASES_READ, Permission.REQUESTS_READ, Permission.REQUESTS_WRITE
+        ];
+      case 'Renter':
+        return [
+          Permission.REQUESTS_READ, Permission.REQUESTS_WRITE, Permission.LEASES_READ
+        ];
+      case 'Employee':
+        return [
+          Permission.DASHBOARD_READ, Permission.UNITS_READ, Permission.RENTERS_READ,
+          Permission.LEASES_READ, Permission.REQUESTS_READ, Permission.REQUESTS_WRITE
+        ];
+      default:
+        return [];
+    }
+  }
+
+  async submitAddUser() {
+    if (!this.newUsername.trim()) {
+      this.alertService.toastWarn('يرجى إدخال اسم المستخدم');
+      return;
+    }
+    if (!this.newPassword.trim() || this.newPassword.length < 4) {
+      this.alertService.toastWarn('كلمة المرور يجب أن تكون 4 أحرف على الأقل');
+      return;
+    }
+    // Check username uniqueness
+    const exists = this.users.some(u => u.username.toLowerCase() === this.newUsername.trim().toLowerCase());
+    if (exists) {
+      this.alertService.toastError('اسم المستخدم مستخدم بالفعل');
+      return;
+    }
+
+    this.addingUser = true;
+
+    const newUser: Partial<User> = {
+      username: this.newUsername.trim(),
+      passwordHash: this.newPassword,
+      role: this.newRole,
+      permissions: this.getDefaultPermissionsForRole(this.newRole),
+      isActive: true,
+      ownerId: this.isOwnerRole && this.newOwnerId ? this.newOwnerId : undefined,
+      renterId: this.isRenterRole && this.newRenterId ? this.newRenterId : undefined
+    };
+
+    this.authService.createUser(newUser).subscribe({
+      next: (created) => {
+        this.addingUser = false;
+        this.showAddModal = false;
+        this.alertService.toastSuccess(`تم إضافة المستخدم "${created.username}" بنجاح`);
+        // Reload users list
+        this.loading = true;
+        this.ngOnInit();
+      },
+      error: (err) => {
+        this.addingUser = false;
+        this.alertService.toastError('فشل إضافة المستخدم: ' + err.message);
+      }
+    });
+  }
+
+  // ── Label Helpers ─────────────────────────────────────────────────────────
+
   getRoleLabel(role: UserRole): string {
     const labels: Record<UserRole, string> = {
       'Admin': 'مدير النظام',
       'Accountant': 'محاسب',
       'Owner': 'مالك',
-      'Renter': 'مستأجر'
+      'Renter': 'مستأجر',
+      'Employee': 'موظف'
     };
     return labels[role] || role;
   }
@@ -108,7 +227,8 @@ export class UsersListComponent implements OnInit {
       'Admin': 'bg-danger',
       'Accountant': 'bg-info',
       'Owner': 'bg-brand',
-      'Renter': 'bg-success'
+      'Renter': 'bg-success',
+      'Employee': 'bg-secondary'
     };
     return classes[role] || 'bg-secondary';
   }
@@ -123,4 +243,5 @@ export class UsersListComponent implements OnInit {
   get totalAccountants(): number { return this.users.filter(u => u.role === 'Accountant').length; }
   get totalOwnerUsers(): number { return this.users.filter(u => u.role === 'Owner').length; }
   get totalRenterUsers(): number { return this.users.filter(u => u.role === 'Renter').length; }
+  get totalEmployees(): number { return this.users.filter(u => u.role === 'Employee').length; }
 }

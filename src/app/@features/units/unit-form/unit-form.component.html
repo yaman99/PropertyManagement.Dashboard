@@ -72,7 +72,7 @@
             </div>
           </div>
 
-          <!-- Owner Selection (when ownership = individual) -->
+          <!-- Owner Selection (when ownership = individual) — only independent owners -->
           <div class="col-md-6" *ngIf="unitForm.get('ownershipType')?.value === 'individual'">
             <label class="form-label">المالك <span class="text-danger">*</span></label>
             <select
@@ -80,11 +80,12 @@
               formControlName="ownerId"
               [class.is-invalid]="unitForm.get('ownerId')?.invalid && unitForm.get('ownerId')?.touched">
               <option value="">اختر المالك...</option>
-              <option *ngFor="let owner of owners$ | async" [value]="owner.id">
+              <option *ngFor="let owner of independentOwners$ | async" [value]="owner.id">
                 {{ owner.fullName }}
               </option>
             </select>
             <div class="invalid-feedback">يرجى اختيار المالك</div>
+            <small class="text-muted">يظهر فقط الملاك المستقلون</small>
           </div>
 
           <!-- Building Name (manual for individual) -->
@@ -166,16 +167,26 @@
           </div>
         </div>
 
-        <!-- Publish Toggle -->
+        <!-- Electricity Meter -->
+        <div class="col-md-6">
+          <label class="form-label"><i class="bi bi-lightning-charge text-warning me-1"></i> رقم عداد الكهرباء</label>
+          <input type="text" class="form-control" formControlName="electricityMeterNumber"
+            placeholder="أدخل رقم عداد الكهرباء الخاص بالوحدة">
+        </div>
+
+        <!-- Publish Toggle — default ON, only admin can turn it OFF -->
         <div class="col-md-12">
           <div class="publish-toggle-container">
             <div class="d-flex align-items-center justify-content-between">
               <div>
                 <label class="form-label mb-0">نشر الوحدة للعملاء</label>
-                <small class="d-block text-muted">السماح بظهور الوحدة في صفحة الوحدات العامة</small>
+                <small class="d-block text-muted">
+                  السماح بظهور الوحدة في صفحة الوحدات العامة
+                  <span *ngIf="!isAdmin" class="text-warning">— يلزم صلاحية مدير النظام للإيقاف</span>
+                </small>
               </div>
               <label class="toggle-switch">
-                <input type="checkbox" formControlName="isPublished">
+                <input type="checkbox" formControlName="isPublished" [disabled]="!isAdmin && unitForm.get('isPublished')?.value">
                 <span class="toggle-slider"></span>
               </label>
             </div>

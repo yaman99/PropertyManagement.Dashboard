@@ -20,9 +20,10 @@ export interface Building {
   imageUrl?: string;        // Building photo
   deedImageUrl?: string;    // صك المبنى
 
-  // Location (Map)
+  // Location
   latitude?: number;
   longitude?: number;
+  mapLink?: string;          // رابط الموقع من جوجل ماب
 
   // Guard Info
   guardName?: string;
@@ -35,9 +36,18 @@ export interface Building {
   rooftopCount?: number;        // الروف (الاسطح)
   servicedApartmentCount?: number; // الشقق المخدومة
 
+  // Water Meter
+  waterMeterNumber?: string;    // رقم عداد المياه
+
+  // Documents & Attachments
+  buildingLicenseUrl?: string;          // رخصة البناء
+  buildingPlanUrl?: string;             // مخططات البناء
+  realEstateAuthorityDeedUrl?: string;  // صك الهيئة العامة للعقار
+  otherDocumentUrls?: string[];         // مستندات أخرى
+
   // Management
   ownerManagerName?: string;    // مسؤول المبنى مع المالك
-  renterManagerName?: string;   // مسؤول المبنى مع المستأجرين
+  renterManagerIds?: string[];  // مسؤولو المبنى مع المستأجرين (multi-select from Employee users)
 
   // Electricity Meters
   electricityMeters?: ElectricityMeter[];
@@ -84,6 +94,7 @@ export interface CreateBuildingDto {
   deedImageUrl?: string;
   latitude?: number;
   longitude?: number;
+  mapLink?: string;
   guardName?: string;
   guardPhone?: string;
   apartmentCount?: number;
@@ -91,8 +102,13 @@ export interface CreateBuildingDto {
   guardRoomCount?: number;
   rooftopCount?: number;
   servicedApartmentCount?: number;
+  waterMeterNumber?: string;
+  buildingLicenseUrl?: string;
+  buildingPlanUrl?: string;
+  realEstateAuthorityDeedUrl?: string;
+  otherDocumentUrls?: string[];
   ownerManagerName?: string;
-  renterManagerName?: string;
+  renterManagerIds?: string[];
   electricityMeters?: ElectricityMeter[];
 }
 
@@ -109,6 +125,7 @@ export interface UpdateBuildingDto {
   deedImageUrl?: string;
   latitude?: number;
   longitude?: number;
+  mapLink?: string;
   guardName?: string;
   guardPhone?: string;
   apartmentCount?: number;
@@ -116,8 +133,13 @@ export interface UpdateBuildingDto {
   guardRoomCount?: number;
   rooftopCount?: number;
   servicedApartmentCount?: number;
+  waterMeterNumber?: string;
+  buildingLicenseUrl?: string;
+  buildingPlanUrl?: string;
+  realEstateAuthorityDeedUrl?: string;
+  otherDocumentUrls?: string[];
   ownerManagerName?: string;
-  renterManagerName?: string;
+  renterManagerIds?: string[];
   electricityMeters?: ElectricityMeter[];
   status?: BuildingStatus;
 }

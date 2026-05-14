@@ -82,7 +82,9 @@ export class RentersListComponent implements OnInit {
     const labels: Record<RenterIdType, string> = {
       [RenterIdType.Identity]: 'هوية وطنية',
       [RenterIdType.Residency]: 'إقامة',
-      [RenterIdType.CommercialRecord]: 'سجل تجاري'
+      [RenterIdType.CommercialRecord]: 'سجل تجاري',
+      [RenterIdType.PremiumResidency]: 'إقامة مميزة',
+      [RenterIdType.GCC]: 'دول مجلس التعاون'
     };
     return labels[idType] || '-';
   }

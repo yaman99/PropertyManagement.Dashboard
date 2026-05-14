@@ -86,6 +86,19 @@ export class RolesListComponent implements OnInit {
           Permission.REQUESTS_READ,
           Permission.REQUESTS_WRITE
         ]
+      },
+      {
+        id: 'role-employee',
+        name: 'Employee',
+        description: 'الموظف - إدارة المبنى ومتابعة المستأجرين',
+        permissions: [
+          Permission.DASHBOARD_READ,
+          Permission.UNITS_READ,
+          Permission.RENTERS_READ,
+          Permission.LEASES_READ,
+          Permission.REQUESTS_READ,
+          Permission.REQUESTS_WRITE
+        ]
       }
     ];
   }
@@ -95,7 +108,8 @@ export class RolesListComponent implements OnInit {
       'Admin': '👑',
       'Accountant': '💼',
       'Owner': '🏠',
-      'Renter': '🔑'
+      'Renter': '🔑',
+      'Employee': '👷'
     };
     return icons[role] || '👤';
   }
@@ -105,7 +119,8 @@ export class RolesListComponent implements OnInit {
       'Admin': 'مدير النظام',
       'Accountant': 'محاسب',
       'Owner': 'مالك',
-      'Renter': 'مستأجر'
+      'Renter': 'مستأجر',
+      'Employee': 'موظف'
     };
     return names[role] || role;
   }

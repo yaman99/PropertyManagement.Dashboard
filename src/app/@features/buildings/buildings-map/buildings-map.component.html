@@ -1,0 +1,85 @@
+<app-page-header
+  title="خريطة المباني"
+  icon="bi-map"
+  [breadcrumbs]="[{label: 'المباني', url: '/app/buildings'}, {label: 'الخريطة'}]"
+  [showActions]="false">
+</app-page-header>
+
+<div class="map-layout" dir="rtl">
+
+  <!-- Sidebar: buildings list -->
+  <div class="buildings-sidebar">
+    <div class="sidebar-header">
+      <h6 class="mb-0"><i class="bi bi-list-ul me-1"></i> المباني المسجلة</h6>
+    </div>
+    <div class="buildings-list">
+      <div
+        *ngFor="let item of buildingsWithStats$ | async"
+        class="building-item"
+        [class.active]="selectedBuilding !== null && selectedBuilding !== undefined && selectedBuilding.building.id === item.building.id"
+        (click)="selectBuilding(item)">
+        <div class="d-flex justify-content-between align-items-start">
+          <div class="flex-grow-1">
+            <div class="fw-semibold">{{ item.building.name }}</div>
+            <small class="text-muted d-block">{{ item.building.address }}</small>
+            <small class="text-muted" *ngIf="item.ownerName">
+              <i class="bi bi-person me-1"></i>{{ item.ownerName }}
+            </small>
+          </div>
+          <div class="text-end ms-2">
+            <span class="badge bg-secondary d-block mb-1">{{ item.totalUnits }} وحدة</span>
+            <span class="badge bg-success">{{ item.availableUnits }} متاح</span>
+          </div>
+        </div>
+        <div *ngIf="!item.building.latitude && !item.building.longitude && !item.building.mapLink"
+          class="text-warning small mt-1">
+          <i class="bi bi-exclamation-triangle me-1"></i> لا يوجد موقع محدد
+        </div>
+      </div>
+
+      <div *ngIf="(buildingsWithStats$ | async)?.length === 0" class="text-center py-4">
+        <i class="bi bi-building fs-2 text-muted"></i>
+        <p class="text-muted small mt-2">لا توجد مباني مسجلة</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Map -->
+  <div class="map-area">
+    <div #mapContainer class="main-map"></div>
+
+    <!-- Selected building info panel -->
+    <div *ngIf="selectedBuilding" class="building-info-panel">
+      <div class="d-flex justify-content-between align-items-start mb-2">
+        <h6 class="mb-0 fw-bold text-brand">{{ selectedBuilding.building.name }}</h6>
+        <button class="btn btn-sm btn-outline-secondary" (click)="selectedBuilding = null">
+          <i class="bi bi-x"></i>
+        </button>
+      </div>
+      <p class="text-muted small mb-2">
+        <i class="bi bi-geo-alt me-1"></i>{{ selectedBuilding.building.address }}
+        <span *ngIf="selectedBuilding.building.city"> — {{ selectedBuilding.building.city }}</span>
+      </p>
+      <div *ngIf="selectedBuilding.ownerName" class="mb-2">
+        <small class="text-muted">المالك: </small>
+        <strong class="small">{{ selectedBuilding.ownerName }}</strong>
+      </div>
+      <div class="d-flex gap-2 mb-3">
+        <span class="badge bg-secondary">{{ selectedBuilding.totalUnits }} وحدة</span>
+        <span class="badge bg-success">{{ selectedBuilding.availableUnits }} متاح</span>
+        <span class="badge bg-light text-dark">{{ getStatusLabel(selectedBuilding.building.status) }}</span>
+      </div>
+      <div class="d-flex gap-2">
+        <button class="btn btn-brand btn-sm flex-grow-1"
+          (click)="goToBuilding(selectedBuilding.building.id)">
+          <i class="bi bi-eye me-1"></i> عرض تفاصيل المبنى
+        </button>
+        <a *ngIf="selectedBuilding.building.mapLink"
+          [href]="selectedBuilding.building.mapLink" target="_blank"
+          class="btn btn-outline-secondary btn-sm">
+          <i class="bi bi-map"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>

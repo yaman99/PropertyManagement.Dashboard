@@ -173,13 +173,27 @@
           </div>
         </div>
         <div class="col-md-6">
-          <div class="d-flex align-items-center justify-content-between p-3 rounded" [ngClass]="lease.commissionPaid ? 'bg-success-subtle' : 'bg-warning-subtle'">
-            <div>
-              <strong>عمولة التأجير:</strong> {{ lease.rentalCommission | number }} ر.س ({{ lease.commissionPercentage }}%)
-              <span *ngIf="lease.commissionPaid" class="badge bg-success ms-2">مدفوع</span>
+          <div class="p-3 rounded" [ngClass]="lease.commissionPaid ? 'bg-success-subtle' : 'bg-warning-subtle'">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <strong>عمولة التأجير</strong>
+              <span *ngIf="lease.commissionPaid" class="badge bg-success">مدفوع</span>
             </div>
-            <button *ngIf="!lease.commissionPaid" class="btn btn-sm btn-success" (click)="markCommissionPaid()">
-              <i class="bi bi-check-lg me-1"></i> تأكيد الدفع
+            <table class="table table-sm mb-2" style="font-size:0.85rem;">
+              <tr>
+                <td class="text-muted border-0 pb-0">العمولة ({{ lease.commissionPercentage }}%{{ lease.commissionDiscount ? ' — بعد خصم ' + (lease.commissionDiscount | number) + ' ر.س' : '' }})</td>
+                <td class="fw-bold border-0 pb-0 text-end">{{ lease.rentalCommission | number }} ر.س</td>
+              </tr>
+              <tr>
+                <td class="text-muted border-0 py-0">ضريبة القيمة المضافة (15%)</td>
+                <td class="fw-bold border-0 py-0 text-end text-warning">{{ lease.commissionVat | number }} ر.س</td>
+              </tr>
+              <tr class="fw-bold">
+                <td class="border-0 pt-1">الإجمالي</td>
+                <td class="border-0 pt-1 text-end text-brand">{{ lease.commissionTotal | number }} ر.س</td>
+              </tr>
+            </table>
+            <button *ngIf="!lease.commissionPaid" class="btn btn-sm btn-success w-100" (click)="markCommissionPaid()">
+              <i class="bi bi-check-lg me-1"></i> تأكيد دفع {{ lease.commissionTotal | number }} ر.س
             </button>
           </div>
         </div>
@@ -230,7 +244,15 @@
             <div class="col-md-4">
               <div class="info-item">
                 <label>عمولة التأجير</label>
-                <p>{{ lease.rentalCommission | number }} ر.س ({{ lease.commissionPercentage }}%)</p>
+                <div class="small">
+                  <div>صافي العمولة: <span class="fw-bold">{{ lease.rentalCommission | number }} ر.س</span>
+                    <span class="text-muted"> ({{ lease.commissionPercentage }}%)</span>
+                  </div>
+                  <div class="text-warning-emphasis">+ ضريبة 15%: <span class="fw-bold">{{ lease.commissionVat | number }} ر.س</span></div>
+                  <div class="fw-bold text-brand border-top mt-1 pt-1">
+                    إجمالي: {{ lease.commissionTotal | number }} ر.س
+                  </div>
+                </div>
               </div>
             </div>
           </div>

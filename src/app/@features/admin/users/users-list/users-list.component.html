@@ -4,13 +4,17 @@
   [breadcrumbs]="[
     {label: 'الإدارة'},
     {label: 'المستخدمون'}
-  ]"
-  [showActions]="false">
+  ]">
+  <div actions>
+    <button class="btn btn-brand" (click)="openAddModal()">
+      <i class="bi bi-person-plus me-1"></i> إضافة مستخدم
+    </button>
+  </div>
 </app-page-header>
 
 <!-- Summary Cards -->
 <div class="row g-3 mb-4" dir="rtl">
-  <div class="col-6 col-md-3">
+  <div class="col-6 col-md-2">
     <div class="card text-center">
       <div class="card-body py-3">
         <div class="fs-3 fw-bold text-danger">{{ totalAdmins }}</div>
@@ -18,7 +22,7 @@
       </div>
     </div>
   </div>
-  <div class="col-6 col-md-3">
+  <div class="col-6 col-md-2">
     <div class="card text-center">
       <div class="card-body py-3">
         <div class="fs-3 fw-bold text-info">{{ totalAccountants }}</div>
@@ -39,6 +43,14 @@
       <div class="card-body py-3">
         <div class="fs-3 fw-bold text-success">{{ totalRenterUsers }}</div>
         <div class="text-muted small">حسابات المستأجرين</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-2">
+    <div class="card text-center">
+      <div class="card-body py-3">
+        <div class="fs-3 fw-bold text-secondary">{{ totalEmployees }}</div>
+        <div class="text-muted small">موظفون</div>
       </div>
     </div>
   </div>
@@ -118,13 +130,11 @@
               </span>
             </td>
             <td>
-              <!-- Owner link -->
               <div *ngIf="user.linkedOwner" class="d-flex align-items-center gap-1">
                 <i class="bi bi-house text-brand"></i>
                 <span class="small">{{ user.linkedOwner.fullName }}</span>
                 <span class="badge bg-light text-dark border">مالك</span>
               </div>
-              <!-- Renter link -->
               <div *ngIf="user.linkedRenter" class="d-flex align-items-center gap-1">
                 <i class="bi bi-person text-success"></i>
                 <span class="small">{{ user.linkedRenter.fullName }}</span>
@@ -132,7 +142,6 @@
               </div>
               <span *ngIf="!user.linkedOwner && !user.linkedRenter" class="text-muted">—</span>
             </td>
-            <!-- Tracking: how many owners/renters this user follows -->
             <td>
               <div class="d-flex gap-2">
                 <div class="text-center" *ngIf="user.managedOwnersCount > 0">
@@ -158,5 +167,94 @@
         </tbody>
       </table>
     </div>
+  </div>
+</div>
+
+<!-- ══════════════ Add User Modal ══════════════ -->
+<div class="modal-overlay" *ngIf="showAddModal" (click)="closeAddModal()">
+  <div class="modal-card" dir="rtl" (click)="$event.stopPropagation()">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h5 class="mb-0 fw-bold">
+        <i class="bi bi-person-plus-fill text-brand me-2"></i> إضافة مستخدم جديد
+      </h5>
+      <button class="btn btn-sm btn-outline-secondary" (click)="closeAddModal()">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+
+    <!-- Role Selection Cards -->
+    <div class="mb-4">
+      <label class="form-label fw-bold mb-2">الدور</label>
+      <div class="row g-2">
+        <div class="col-4" *ngFor="let r of addUserRoles">
+          <div class="role-card"
+               [class.role-card-active]="newRole === r.value"
+               (click)="newRole = r.value">
+            <span class="role-icon">{{ r.icon }}</span>
+            <span class="role-name">{{ r.label }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Username & Password -->
+    <div class="row g-3 mb-3">
+      <div class="col-6">
+        <label class="form-label">اسم المستخدم <span class="text-danger">*</span></label>
+        <input type="text" class="form-control" [(ngModel)]="newUsername"
+               placeholder="مثال: ahmad_ali" autocomplete="new-username">
+      </div>
+      <div class="col-6">
+        <label class="form-label">كلمة المرور <span class="text-danger">*</span></label>
+        <input type="password" class="form-control" [(ngModel)]="newPassword"
+               placeholder="4 أحرف على الأقل" autocomplete="new-password">
+      </div>
+    </div>
+
+    <!-- Owner Link (for Owner role) -->
+    <div class="mb-3" *ngIf="isOwnerRole">
+      <label class="form-label">ربط بمالك (اختياري)</label>
+      <select class="form-select" [(ngModel)]="newOwnerId">
+        <option value="">— بدون ربط —</option>
+        <option *ngFor="let owner of availableOwners" [value]="owner.id">
+          {{ owner.fullName }}
+        </option>
+      </select>
+      <small class="text-muted">يتيح للمالك رؤية بياناته ووحداته عند تسجيل الدخول</small>
+    </div>
+
+    <!-- Renter Link (for Renter role) -->
+    <div class="mb-3" *ngIf="isRenterRole">
+      <label class="form-label">ربط بمستأجر (اختياري)</label>
+      <select class="form-select" [(ngModel)]="newRenterId">
+        <option value="">— بدون ربط —</option>
+        <option *ngFor="let renter of availableRenters" [value]="renter.id">
+          {{ renter.fullName }}
+        </option>
+      </select>
+      <small class="text-muted">يتيح للمستأجر رؤية عقده وطلباته عند تسجيل الدخول</small>
+    </div>
+
+    <!-- Permissions Note -->
+    <div class="alert alert-info py-2 small mb-4">
+      <i class="bi bi-shield-check me-1"></i>
+      سيتم تعيين الصلاحيات الافتراضية لدور <strong>{{ getRoleLabel(newRole) }}</strong> تلقائياً.
+      يمكنك تعديلها لاحقاً من إدارة الأدوار والصلاحيات.
+    </div>
+
+    <!-- Actions -->
+    <div class="d-flex gap-2 justify-content-end">
+      <button class="btn btn-outline-secondary" (click)="closeAddModal()" [disabled]="addingUser">
+        إلغاء
+      </button>
+      <button class="btn btn-brand" (click)="submitAddUser()" [disabled]="addingUser">
+        <span *ngIf="addingUser" class="spinner-border spinner-border-sm me-1"></span>
+        <i *ngIf="!addingUser" class="bi bi-check-lg me-1"></i>
+        إضافة المستخدم
+      </button>
+    </div>
+
   </div>
 </div>

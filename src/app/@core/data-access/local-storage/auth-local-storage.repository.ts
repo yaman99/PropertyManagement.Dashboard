@@ -141,6 +141,19 @@ export class AuthLocalStorageRepository implements AuthRepository {
           Permission.LEASES_READ
         ],
         description: 'Tenant access'
+      },
+      {
+        id: 'ROLE005',
+        name: 'Employee',
+        permissions: [
+          Permission.DASHBOARD_READ,
+          Permission.UNITS_READ,
+          Permission.RENTERS_READ,
+          Permission.LEASES_READ,
+          Permission.REQUESTS_READ,
+          Permission.REQUESTS_WRITE
+        ],
+        description: 'Building employee / manager'
       }
     ];
 
