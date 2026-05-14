@@ -1,0 +1,1 @@
+import{j as i,r}from"./chunk-V2226EVJ.js";import{Qa as e,S as t}from"./chunk-FTI6PXSW.js";var s=[{path:"",loadComponent:()=>import("./chunk-XOJBSFYV.js").then(o=>o.SettingsPageComponent)}],n=class o{static \u0275fac=function(m){return new(m||o)};static \u0275mod=e({type:o});static \u0275inj=t({imports:[i,r.forChild(s)]})};export{n as SettingsModule};
